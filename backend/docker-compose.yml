@@ -1,0 +1,37 @@
+version: "3.9"
+services:
+  app:
+    build: .
+    container_name: diplomski-backend
+    depends_on:
+      - db
+    ports:
+      - "3000:3000"
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASS=password
+      - DB_NAME=diplomski
+    volumes:
+      - .:/usr/src/app:delegated
+      - /usr/src/app/node_modules
+    command: npm run dev
+    # command: npm run dev   # or "node dist/index.js" in prod
+
+  db:
+    image: postgres:16
+    container_name: my-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: diplomski
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
