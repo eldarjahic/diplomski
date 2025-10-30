@@ -2,7 +2,7 @@ import { useState } from "react";
 import { NavLink } from "react-router-dom";
 // Place your logo image at: src/assets/images/logo.png
 // You can change the filename below if needed
-import logo from "../assets/images/EldyNekretnine.jpg";
+import logo from "../assets/images/LDNekretnine.png";
 
 function Header() {
   const [open, setOpen] = useState(false);
@@ -12,11 +12,11 @@ function Header() {
       : "text-gray-600 font-medium px-2 py-1 rounded-md";
 
   return (
-    <header className="sticky top-0 z-10 border-b border-gray-200 bg-white">
-      <div className="flex h-14 w-full items-center justify-between px-4">
+    <header className="sticky top-0 z-10 border-b border-gray-200 bg-white overflow-hidden">
+      <div className="flex h-14 w-full items-center justify-between px-4 md:h-16">
         <div className="flex items-center gap-2">
           {/* Logo loaded from src/assets/images */}
-          <img src={logo} alt="Logo" className="h-10  object-contain md:h-10" />
+          <img src={logo} alt="Logo" className="w-30 object-contain" />
         </div>
 
         <nav className="hidden items-center gap-4 md:flex">
