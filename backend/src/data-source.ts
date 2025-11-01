@@ -1,4 +1,5 @@
 import "reflect-metadata";
+import "dotenv/config";
 import { DataSource } from "typeorm";
 
 export const AppDataSource = new DataSource({
@@ -8,7 +9,7 @@ export const AppDataSource = new DataSource({
   username: process.env.DB_USER || "postgres",
   password: process.env.DB_PASS || "password",
   database: process.env.DB_NAME || "diplomski",
-  synchronize: true,  // ⚠️ Only for dev, auto-sync schema
+  synchronize: false,
   logging: true,
   entities: [__dirname + "/entity/*.ts"],
   migrations: [__dirname + "/migration/*.ts"],

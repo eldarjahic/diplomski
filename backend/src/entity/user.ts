@@ -1,4 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from "typeorm";
+import { Property } from "./property";
 
 @Entity()
 export class User {
@@ -16,4 +17,10 @@ export class User {
 
   @Column({ default: true })
   isActive: boolean;
+
+  @Column({ type: "enum", enum: ["user", "agent"], default: "user" })
+  role: string;
+
+  @OneToMany(() => Property, (property) => property.owner)
+  properties: Property[];
 }
