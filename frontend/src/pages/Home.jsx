@@ -1,4 +1,9 @@
+import { useAuth } from "../context/AuthContext";
+import ImageCarousel from "../components/ImageCarousel";
+
 function Home() {
+  const { isAuthenticated } = useAuth();
+
   return (
     <main className="min-h-[calc(100vh-4rem)] bg-white">
       {/* Hero */}
@@ -43,9 +48,18 @@ function Home() {
             </div>
           </div>
 
-          {/* Illustration placeholder */}
-          <div className="hidden md:block">
-            <div className="h-64 w-full rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200" />
+          {/* Real Estate Image Carousel */}
+          <div>
+            <ImageCarousel
+              images={[
+                "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800&h=600&fit=crop",
+                "https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=800&h=600&fit=crop",
+                "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&h=600&fit=crop",
+                "https://images.unsplash.com/photo-1560520653-9e0e4c89eb11?w=800&h=600&fit=crop",
+                "https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=800&h=600&fit=crop",
+              ]}
+              autoPlayInterval={5000}
+            />
           </div>
         </div>
       </section>
@@ -88,33 +102,35 @@ function Home() {
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="mx-auto max-w-7xl px-4 pb-16">
-        <div className="flex flex-col items-start justify-between gap-4 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:flex-row sm:items-center">
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900">
-              Ready to get started?
-            </h3>
-            <p className="text-sm text-gray-600">
-              Create an account to save favorites and get instant alerts.
-            </p>
+      {/* CTA - Only show when not logged in */}
+      {!isAuthenticated && (
+        <section className="mx-auto max-w-7xl px-4 pb-16">
+          <div className="flex flex-col items-start justify-between gap-4 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:flex-row sm:items-center">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">
+                Ready to get started?
+              </h3>
+              <p className="text-sm text-gray-600">
+                Create an account to save favorites and get instant alerts.
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <a
+                href="/register"
+                className="rounded-lg border border-gray-900 bg-gray-900 px-4 py-2 text-sm font-semibold text-white"
+              >
+                Create account
+              </a>
+              <a
+                href="/rent"
+                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-900"
+              >
+                Browse rentals
+              </a>
+            </div>
           </div>
-          <div className="flex gap-3">
-            <a
-              href="/register"
-              className="rounded-lg border border-gray-900 bg-gray-900 px-4 py-2 text-sm font-semibold text-white"
-            >
-              Create account
-            </a>
-            <a
-              href="/rent"
-              className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-900"
-            >
-              Browse rentals
-            </a>
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
     </main>
   );
 }

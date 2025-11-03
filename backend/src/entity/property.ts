@@ -77,8 +77,15 @@ export class Property {
   heating: boolean;
 
   // Images
+  @Column({ nullable: true })
+  imageUrl: string; // Main image URL
+
   @Column("simple-array", { nullable: true })
-  images: string[];
+  images: string[]; // Additional images array
+
+  // Google Maps
+  @Column({ nullable: true })
+  googleMapsUrl: string; // Google Maps location URL/tag
 
   // Contact info
   @Column({ nullable: true })

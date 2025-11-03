@@ -1,15 +1,24 @@
 import { useState } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 // Place your logo image at: src/assets/images/logo.png
 // You can change the filename below if needed
 import logo from "../assets/images/LDNekretnine.png";
 
 function Header() {
   const [open, setOpen] = useState(false);
+  const { user, isAuthenticated, logout } = useAuth();
+  const navigate = useNavigate();
   const linkClass = ({ isActive }) =>
     isActive
       ? "text-gray-900 font-semibold px-2 py-1 rounded-md"
       : "text-gray-600 font-medium px-2 py-1 rounded-md";
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+    setOpen(false);
+  };
 
   return (
     <header className="sticky top-0 z-10 border-b border-gray-200 bg-white overflow-hidden">
@@ -38,17 +47,41 @@ function Header() {
         </nav>
 
         <div className="hidden items-center gap-3 md:flex">
-          <NavLink to="/login" className={linkClass}>
-            Login
-          </NavLink>
-          <NavLink
-            to="/register"
-            className={() =>
-              "inline-block rounded-lg border border-gray-900 bg-gray-900 px-3 py-2 text-sm font-semibold text-white"
-            }
-          >
-            Register
-          </NavLink>
+          {isAuthenticated ? (
+            <>
+              <NavLink
+                to="/add-property"
+                className={() =>
+                  "inline-block rounded-lg border border-gray-900 bg-gray-900 px-3 py-2 text-sm font-semibold text-white hover:bg-black"
+                }
+              >
+                List Property
+              </NavLink>
+              <span className="text-sm text-gray-600">
+                {user?.firstName} {user?.lastName}
+              </span>
+              <button
+                onClick={handleLogout}
+                className="text-gray-600 font-medium px-2 py-1 rounded-md hover:text-gray-900"
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <NavLink to="/login" className={linkClass}>
+                Login
+              </NavLink>
+              <NavLink
+                to="/register"
+                className={() =>
+                  "inline-block rounded-lg border border-gray-900 bg-gray-900 px-3 py-2 text-sm font-semibold text-white"
+                }
+              >
+                Register
+              </NavLink>
+            </>
+          )}
         </div>
 
         <button
@@ -128,22 +161,47 @@ function Header() {
               About Us
             </NavLink>
             <div className="mt-2 flex items-center gap-3">
-              <NavLink
-                to="/login"
-                className={linkClass}
-                onClick={() => setOpen(false)}
-              >
-                Login
-              </NavLink>
-              <NavLink
-                to="/register"
-                className={() =>
-                  "inline-block rounded-lg border border-gray-900 bg-gray-900 px-3 py-2 text-sm font-semibold text-white"
-                }
-                onClick={() => setOpen(false)}
-              >
-                Register
-              </NavLink>
+              {isAuthenticated ? (
+                <>
+                  <NavLink
+                    to="/add-property"
+                    className={() =>
+                      "inline-block rounded-lg border border-gray-900 bg-gray-900 px-3 py-2 text-sm font-semibold text-white"
+                    }
+                    onClick={() => setOpen(false)}
+                  >
+                    List Property
+                  </NavLink>
+                  <span className="text-sm text-gray-600 px-2 py-1">
+                    {user?.firstName} {user?.lastName}
+                  </span>
+                  <button
+                    onClick={handleLogout}
+                    className="text-gray-600 font-medium px-2 py-1 rounded-md hover:text-gray-900"
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <>
+                  <NavLink
+                    to="/login"
+                    className={linkClass}
+                    onClick={() => setOpen(false)}
+                  >
+                    Login
+                  </NavLink>
+                  <NavLink
+                    to="/register"
+                    className={() =>
+                      "inline-block rounded-lg border border-gray-900 bg-gray-900 px-3 py-2 text-sm font-semibold text-white"
+                    }
+                    onClick={() => setOpen(false)}
+                  >
+                    Register
+                  </NavLink>
+                </>
+              )}
             </div>
           </div>
         </div>

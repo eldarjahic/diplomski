@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 function Register() {
   const [email, setEmail] = useState("");
@@ -6,25 +8,47 @@ function Register() {
   const [lastName, setLastName] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const { register, isAuthenticated, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
 
-  const handleRegister = () => {
+  // Redirect if already logged in
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      navigate("/");
+    }
+  }, [isAuthenticated, authLoading, navigate]);
+
+  // Don't render if still loading or already authenticated
+  if (authLoading || isAuthenticated) {
+    return null;
+  }
+
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    setError("");
+
     if (password !== confirmPassword) {
-      alert("Passwords do not match");
+      setError("Passwords do not match");
       return;
     }
-    fetch("http://localhost:8000/register", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ email, firstName, lastName, password }),
-    }).then((res) => {
-      if (res.ok) {
-        window.location.href = "/login";
-      } else {
-        alert("Failed to register");
-      }
-    });
+
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters");
+      return;
+    }
+
+    setLoading(true);
+    const result = await register(email, firstName, lastName, password);
+
+    if (result.success) {
+      // If token is returned, user is automatically logged in
+      navigate("/");
+    } else {
+      setError(result.error || "Registration failed");
+    }
+    setLoading(false);
   };
   return (
     <main className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-7xl items-center justify-center px-4 py-12">
@@ -38,7 +62,13 @@ function Register() {
           </p>
         </div>
 
-        <form className="space-y-4">
+        {error && (
+          <div className="mb-4 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600">
+            {error}
+          </div>
+        )}
+
+        <form className="space-y-4" onSubmit={handleRegister}>
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-900">
               First name
@@ -101,11 +131,11 @@ function Register() {
           </div>
 
           <button
-            type="button"
-            className="mt-2 w-full rounded-lg border border-gray-900 bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-black"
-            onClick={handleRegister}
+            type="submit"
+            disabled={loading}
+            className="mt-2 w-full rounded-lg border border-gray-900 bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-black disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Create account
+            {loading ? "Creating account..." : "Create account"}
           </button>
         </form>
 
