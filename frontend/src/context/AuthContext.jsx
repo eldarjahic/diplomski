@@ -1,4 +1,10 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
 
 const AuthContext = createContext(null);
 
@@ -91,13 +97,13 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem("user");
   };
 
-  const getAuthHeaders = () => {
+  const getAuthHeaders = useCallback(() => {
     const token = localStorage.getItem("token");
     return {
       "Content-Type": "application/json",
       ...(token && { Authorization: `Bearer ${token}` }),
     };
-  };
+  }, []);
 
   const value = {
     user,

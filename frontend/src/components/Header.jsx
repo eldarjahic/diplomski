@@ -38,9 +38,11 @@ function Header() {
           <NavLink to="/buy" className={linkClass}>
             For Buy
           </NavLink>
-          <NavLink to="/service" className={linkClass}>
-            Service
-          </NavLink>
+          {isAuthenticated && (
+            <NavLink to="/my-properties" className={linkClass}>
+              My Properties
+            </NavLink>
+          )}
           <NavLink to="/about" className={linkClass}>
             About Us
           </NavLink>
@@ -146,13 +148,15 @@ function Header() {
             >
               For Buy
             </NavLink>
-            <NavLink
-              to="/service"
-              className={linkClass}
-              onClick={() => setOpen(false)}
-            >
-              Service
-            </NavLink>
+            {isAuthenticated && (
+              <NavLink
+                to="/my-properties"
+                className={linkClass}
+                onClick={() => setOpen(false)}
+              >
+                My Properties
+              </NavLink>
+            )}
             <NavLink
               to="/about"
               className={linkClass}

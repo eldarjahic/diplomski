@@ -5,6 +5,144 @@ import { authenticateToken, AuthRequest } from "../middleware/auth";
 
 const router = Router();
 
+const requiredFields = [
+  "title",
+  "description",
+  "type",
+  "listingType",
+  "city",
+  "address",
+  "price",
+  "area",
+  "bedrooms",
+  "bathrooms",
+];
+
+const sanitizeImages = (images?: unknown): string[] => {
+  if (!Array.isArray(images)) {
+    return [];
+  }
+  return images
+    .filter(
+      (img): img is string => typeof img === "string" && img.trim().length > 0
+    )
+    .map((img) => img.trim());
+};
+
+const parseNumberField = (
+  value: unknown,
+  field: string,
+  fallback?: number | null
+): number | null => {
+  if (value === undefined || value === null || value === "") {
+    return fallback ?? null;
+  }
+  const parsed = Number(value);
+  if (Number.isNaN(parsed)) {
+    throw new Error(`Invalid value for ${field}`);
+  }
+  return parsed;
+};
+
+const preparePropertyData = (
+  data: any,
+  options: {
+    requireImages?: boolean;
+    existingProperty?: Property | null;
+  } = {}
+) => {
+  const { requireImages = false, existingProperty = null } = options;
+
+  for (const field of requiredFields) {
+    if (
+      (data[field] === undefined ||
+        data[field] === null ||
+        data[field] === "") &&
+      !existingProperty
+    ) {
+      throw new Error(`Missing required field: ${field}`);
+    }
+  }
+
+  const images = sanitizeImages(data.images);
+
+  if (requireImages && images.length === 0) {
+    throw new Error("At least one image is required");
+  }
+
+  const cleanData: Partial<Property> = {
+    title: data.title ?? existingProperty?.title ?? "",
+    description: data.description ?? existingProperty?.description ?? "",
+    type: data.type ?? existingProperty?.type ?? "apartment",
+    listingType: data.listingType ?? existingProperty?.listingType ?? "rent",
+    city: data.city ?? existingProperty?.city ?? "",
+    address: data.address ?? existingProperty?.address ?? "",
+    neighborhood: data.neighborhood ?? existingProperty?.neighborhood ?? null,
+    price:
+      parseNumberField(
+        data.price,
+        "price",
+        existingProperty?.price ?? undefined
+      ) ?? 0,
+    area:
+      parseNumberField(
+        data.area,
+        "area",
+        existingProperty?.area ?? undefined
+      ) ?? 0,
+    bedrooms:
+      parseNumberField(
+        data.bedrooms,
+        "bedrooms",
+        existingProperty?.bedrooms ?? undefined
+      ) ?? 0,
+    bathrooms:
+      parseNumberField(
+        data.bathrooms,
+        "bathrooms",
+        existingProperty?.bathrooms ?? undefined
+      ) ?? 0,
+    parking: parseNumberField(
+      data.parking,
+      "parking",
+      existingProperty?.parking ?? null
+    ),
+    furnished:
+      data.furnished !== undefined
+        ? Boolean(data.furnished)
+        : existingProperty?.furnished ?? false,
+    balcony:
+      data.balcony !== undefined
+        ? Boolean(data.balcony)
+        : existingProperty?.balcony ?? false,
+    elevator:
+      data.elevator !== undefined
+        ? Boolean(data.elevator)
+        : existingProperty?.elevator ?? false,
+    heating:
+      data.heating !== undefined
+        ? Boolean(data.heating)
+        : existingProperty?.heating ?? false,
+    phone: data.phone ?? existingProperty?.phone ?? null,
+    status: data.status ?? existingProperty?.status ?? "available",
+    googleMapsUrl:
+      data.googleMapsUrl ?? existingProperty?.googleMapsUrl ?? null,
+  };
+
+  if (images.length > 0) {
+    cleanData.images = images;
+    cleanData.imageUrl = images[0];
+  } else if (existingProperty) {
+    cleanData.images = existingProperty.images ?? null;
+    cleanData.imageUrl = existingProperty.imageUrl ?? null;
+  } else {
+    cleanData.images = null;
+    cleanData.imageUrl = null;
+  }
+
+  return cleanData;
+};
+
 // Get all properties with optional filters
 router.get("/", async (req: Request, res: Response) => {
   try {
@@ -85,6 +223,28 @@ router.get("/", async (req: Request, res: Response) => {
   }
 });
 
+// Get properties for the authenticated user
+router.get("/my", authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const userId = (req as AuthRequest).user?.userId;
+    if (!userId) {
+      return res.status(401).send({ error: "Unauthorized" });
+    }
+
+    const propertyRepository = AppDataSource.getRepository(Property);
+    const properties = await propertyRepository.find({
+      where: { owner: { id: userId } },
+      relations: ["owner"],
+      order: { createdAt: "DESC" },
+    });
+
+    res.send(properties);
+  } catch (error) {
+    console.error("Error fetching user properties:", error);
+    res.status(500).send({ error: "Failed to fetch your properties" });
+  }
+});
+
 // Get single property by ID
 router.get("/:id", async (req: Request, res: Response) => {
   try {
@@ -117,64 +277,30 @@ router.post("/", authenticateToken, async (req: Request, res: Response) => {
       return res.status(401).send({ error: "Unauthorized" });
     }
 
-    // Validate required fields
-    const requiredFields = [
-      "title",
-      "description",
-      "type",
-      "listingType",
-      "city",
-      "address",
-      "price",
-      "area",
-      "bedrooms",
-      "bathrooms",
-    ];
-
-    for (const field of requiredFields) {
-      if (!propertyData[field] && propertyData[field] !== 0) {
-        return res.status(400).send({
-          error: `Missing required field: ${field}`,
-        });
-      }
-    }
-
     const propertyRepository = AppDataSource.getRepository(Property);
 
-    // Clean up the data - remove empty strings and convert types
-    const cleanData = {
-      ...propertyData,
-      parking: propertyData.parking ? Number(propertyData.parking) : null,
-      latitude: propertyData.latitude ? Number(propertyData.latitude) : null,
-      longitude: propertyData.longitude ? Number(propertyData.longitude) : null,
-      price: Number(propertyData.price),
-      area: Number(propertyData.area),
-      bedrooms: Number(propertyData.bedrooms),
-      bathrooms: Number(propertyData.bathrooms),
-      neighborhood: propertyData.neighborhood || null,
-      phone: propertyData.phone || null,
-      imageUrl: propertyData.imageUrl || null,
-      googleMapsUrl: propertyData.googleMapsUrl || null,
-      images: propertyData.images && Array.isArray(propertyData.images) 
-        ? propertyData.images 
-        : null,
-      status: propertyData.status || "available",
-      owner: { id: userId },
-    };
+    const cleanData = preparePropertyData(propertyData, {
+      requireImages: true,
+    });
 
-    const newProperty = propertyRepository.create(cleanData);
+    const newProperty = propertyRepository.create({
+      ...cleanData,
+      owner: { id: userId },
+    });
 
     const savedProperty = await propertyRepository.save(newProperty);
 
     res.status(201).send(savedProperty);
   } catch (error: any) {
     console.error("Error creating property:", error);
-    // Return more detailed error message
-    const errorMessage =
-      error.message || "Failed to create property";
-    res.status(500).send({
-      error: errorMessage,
-      details: process.env.NODE_ENV === "development" ? error.stack : undefined,
+    const statusCode =
+      error.message?.startsWith("Missing") ||
+      error.message?.includes("image") ||
+      error.message?.startsWith("Invalid")
+        ? 400
+        : 500;
+    res.status(statusCode).send({
+      error: error.message || "Failed to create property",
     });
   }
 });
@@ -195,50 +321,65 @@ router.put("/:id", authenticateToken, async (req: Request, res: Response) => {
       return res.status(404).send({ error: "Property not found" });
     }
 
-    // Check if user owns the property or is an admin
     if (property.owner.id !== userId) {
       return res.status(403).send({ error: "Forbidden" });
     }
 
-    Object.assign(property, req.body);
+    const cleanData = preparePropertyData(req.body, {
+      requireImages: false,
+      existingProperty: property,
+    });
+
+    Object.assign(property, cleanData);
+
     const updatedProperty = await propertyRepository.save(property);
 
     res.send(updatedProperty);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error updating property:", error);
-    res.status(500).send({ error: "Failed to update property" });
+    const statusCode =
+      error.message?.startsWith("Missing") ||
+      error.message?.includes("image") ||
+      error.message?.startsWith("Invalid")
+        ? 400
+        : 500;
+    res.status(statusCode).send({
+      error: error.message || "Failed to update property",
+    });
   }
 });
 
 // Delete property (requires authentication)
-router.delete("/:id", authenticateToken, async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const userId = (req as AuthRequest).user?.userId;
-    const propertyRepository = AppDataSource.getRepository(Property);
+router.delete(
+  "/:id",
+  authenticateToken,
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const userId = (req as AuthRequest).user?.userId;
+      const propertyRepository = AppDataSource.getRepository(Property);
 
-    const property = await propertyRepository.findOne({
-      where: { id: Number(id) },
-      relations: ["owner"],
-    });
+      const property = await propertyRepository.findOne({
+        where: { id: Number(id) },
+        relations: ["owner"],
+      });
 
-    if (!property) {
-      return res.status(404).send({ error: "Property not found" });
+      if (!property) {
+        return res.status(404).send({ error: "Property not found" });
+      }
+
+      if (property.owner.id !== userId) {
+        return res.status(403).send({ error: "Forbidden" });
+      }
+
+      await propertyRepository.remove(property);
+
+      res.send({ message: "Property deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting property:", error);
+      res.status(500).send({ error: "Failed to delete property" });
     }
-
-    // Check if user owns the property or is an admin
-    if (property.owner.id !== userId) {
-      return res.status(403).send({ error: "Forbidden" });
-    }
-
-    await propertyRepository.remove(property);
-
-    res.send({ message: "Property deleted successfully" });
-  } catch (error) {
-    console.error("Error deleting property:", error);
-    res.status(500).send({ error: "Failed to delete property" });
   }
-});
+);
 
 export default router;
-

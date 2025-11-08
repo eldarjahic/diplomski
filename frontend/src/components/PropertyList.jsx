@@ -92,7 +92,7 @@ function PropertyList({ listingType, city, minPrice, maxPrice }) {
           <PropertyCard
             key={property.id}
             property={property}
-            onClick={() => handlePropertyClick(property)}
+            onClick={() => (window.location.href = `/properties/${property.id}`)}
           />
         ))}
       </div>

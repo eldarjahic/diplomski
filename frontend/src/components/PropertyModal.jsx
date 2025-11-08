@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-function PropertyModal({ property, isOpen, onClose }) {
+function PropertyModal({ property, isOpen, onClose, isOwner = false, onEdit = () => {} }) {
   useEffect(() => {
     const handleEscape = (e) => {
       if (e.key === "Escape" && isOpen) {
@@ -22,9 +22,9 @@ function PropertyModal({ property, isOpen, onClose }) {
   if (!isOpen || !property) return null;
 
   const formatPrice = (price) => {
-    return new Intl.NumberFormat("en-US", {
+    return new Intl.NumberFormat("bs-BA", {
       style: "currency",
-      currency: "EUR",
+      currency: "BAM",
       minimumFractionDigits: 0,
     }).format(price);
   };
@@ -105,7 +105,7 @@ function PropertyModal({ property, isOpen, onClose }) {
               <div className="text-3xl font-bold text-gray-900">
                 {formatPrice(property.price)}
                 {property.listingType === "rent" && (
-                  <span className="text-lg font-normal text-gray-600">/mo</span>
+                  <span className="text-lg font-normal text-gray-600">/mj</span>
                 )}
               </div>
               <span className="inline-block rounded-full bg-gray-900 px-3 py-1 text-xs font-semibold text-white">
@@ -276,9 +276,18 @@ function PropertyModal({ property, isOpen, onClose }) {
                 </a>
               )}
             </div>
-            <button className="rounded-lg bg-gray-900 px-6 py-3 font-semibold text-white hover:bg-black">
-              Contact Owner
-            </button>
+            {isOwner ? (
+              <button
+                onClick={onEdit}
+                className="rounded-lg border border-gray-900 px-6 py-3 font-semibold text-gray-900 hover:bg-gray-100"
+              >
+                Edit Property
+              </button>
+            ) : (
+              <button className="rounded-lg bg-gray-900 px-6 py-3 font-semibold text-white hover:bg-black">
+                Contact Owner
+              </button>
+            )}
           </div>
         </div>
       </div>

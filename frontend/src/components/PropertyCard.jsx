@@ -1,8 +1,8 @@
 function PropertyCard({ property, onClick }) {
   const formatPrice = (price) => {
-    return new Intl.NumberFormat("en-US", {
+    return new Intl.NumberFormat("bs-BA", {
       style: "currency",
-      currency: "EUR",
+      currency: "BAM",
       minimumFractionDigits: 0,
     }).format(price);
   };
@@ -43,7 +43,7 @@ function PropertyCard({ property, onClick }) {
           <span className="ml-2 text-xl font-bold text-gray-900">
             {formatPrice(property.price)}
             {property.listingType === "rent" && (
-              <span className="text-sm font-normal text-gray-600">/mo</span>
+              <span className="text-sm font-normal text-gray-600">/mj</span>
             )}
           </span>
         </div>

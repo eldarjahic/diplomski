@@ -1,26 +1,44 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 
-const ImageCarousel = ({ images = [], autoPlayInterval = 5000 }) => {
+const DEFAULT_AUTO_PLAY_INTERVAL = 5000;
+const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=800&h=600&fit=crop";
+
+function shuffleArray(array) {
+  return [...array].sort(() => Math.random() - 0.5);
+}
+
+const ImageCarousel = ({ autoPlayInterval = DEFAULT_AUTO_PLAY_INTERVAL }) => {
+  const [properties, setProperties] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const intervalRef = useRef(null);
+  const navigate = useNavigate();
 
-  // Default placeholder images if none provided
-  const defaultImages = [
-    "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800&h=600&fit=crop",
-    "https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=800&h=600&fit=crop",
-    "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&h=600&fit=crop",
-    "https://images.unsplash.com/photo-1560520653-9e0e4c89eb11?w=800&h=600&fit=crop",
-    "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800&h=600&fit=crop",
-  ];
+  const carouselItems = useMemo(() => properties.slice(0, 5), [properties]);
 
-  const carouselImages = images.length > 0 ? images : defaultImages;
-
-  // Auto-play functionality
   useEffect(() => {
-    if (!isPaused && carouselImages.length > 1) {
+    const fetchProperties = async () => {
+      try {
+        const response = await fetch("http://localhost:8000/properties");
+        if (!response.ok) {
+          throw new Error("Failed to fetch properties");
+        }
+        const data = await response.json();
+        setProperties(shuffleArray(data));
+      } catch (error) {
+        console.error("Error loading properties for carousel", error);
+        setProperties([]);
+      }
+    };
+
+    fetchProperties();
+  }, []);
+
+  useEffect(() => {
+    if (!isPaused && carouselItems.length > 1) {
       intervalRef.current = setInterval(() => {
-        setCurrentIndex((prevIndex) => (prevIndex + 1) % carouselImages.length);
+        setCurrentIndex((prevIndex) => (prevIndex + 1) % carouselItems.length);
       }, autoPlayInterval);
     }
 
@@ -29,18 +47,20 @@ const ImageCarousel = ({ images = [], autoPlayInterval = 5000 }) => {
         clearInterval(intervalRef.current);
       }
     };
-  }, [isPaused, carouselImages.length, autoPlayInterval]);
+  }, [isPaused, carouselItems.length, autoPlayInterval]);
 
   const goToPrevious = () => {
+    if (carouselItems.length === 0) return;
     setCurrentIndex(
-      (prevIndex) => (prevIndex - 1 + carouselImages.length) % carouselImages.length
+      (prevIndex) => (prevIndex - 1 + carouselItems.length) % carouselItems.length
     );
     setIsPaused(true);
     setTimeout(() => setIsPaused(false), autoPlayInterval * 2);
   };
 
   const goToNext = () => {
-    setCurrentIndex((prevIndex) => (prevIndex + 1) % carouselImages.length);
+    if (carouselItems.length === 0) return;
+    setCurrentIndex((prevIndex) => (prevIndex + 1) % carouselItems.length);
     setIsPaused(true);
     setTimeout(() => setIsPaused(false), autoPlayInterval * 2);
   };
@@ -51,41 +71,101 @@ const ImageCarousel = ({ images = [], autoPlayInterval = 5000 }) => {
     setTimeout(() => setIsPaused(false), autoPlayInterval * 2);
   };
 
+  const handleCardClick = () => {
+    const currentProperty = carouselItems[currentIndex];
+    if (!currentProperty) return;
+    navigate(`/properties/${currentProperty.id}`);
+  };
+
+  const handleKeyDown = (event) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      handleCardClick();
+    } else if (event.key === "ArrowRight") {
+      goToNext();
+    } else if (event.key === "ArrowLeft") {
+      goToPrevious();
+    }
+  };
+
+  const currentProperty = carouselItems[currentIndex];
+
   return (
     <div
-      className="relative h-48 w-full overflow-hidden rounded-2xl shadow-lg md:h-64"
+      className="relative h-64 w-full overflow-hidden rounded-2xl shadow-lg md:h-80"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
+      tabIndex={0}
+      role="button"
+      onKeyDown={handleKeyDown}
+      aria-label="Featured properties carousel"
     >
       {/* Images Container */}
       <div className="relative h-full w-full">
-        {carouselImages.map((image, index) => (
-          <div
-            key={index}
-            className={`absolute h-full w-full transition-opacity duration-700 ease-in-out ${
-              index === currentIndex ? "opacity-100" : "opacity-0"
-            }`}
-          >
-            <img
-              src={image}
-              alt={`Property ${index + 1}`}
-              className="h-full w-full object-cover"
-              loading="lazy"
-            />
-            {/* Overlay gradient for better text visibility */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+        {carouselItems.map((property, index) => {
+          const imageUrl = property?.imageUrl || property?.images?.[0] || FALLBACK_IMAGE;
+          return (
+            <div
+              key={property.id}
+              className={`absolute h-full w-full transition-opacity duration-700 ease-in-out ${
+                index === currentIndex ? "opacity-100" : "opacity-0"
+              }`}
+            >
+              <img
+                src={imageUrl}
+                alt={property.title || `Property ${index + 1}`}
+                className="h-full w-full object-cover"
+                loading="lazy"
+                onError={(event) => {
+                  event.currentTarget.src = FALLBACK_IMAGE;
+                }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+              <div className="absolute bottom-6 left-6 right-6 text-white">
+                <h3 className="text-2xl font-semibold drop-shadow">
+                  {property.title || "Featured property"}
+                </h3>
+                <p className="mt-2 max-w-xl text-sm text-white/90 drop-shadow">
+                  {property.city}
+                  {property.neighborhood ? `, ${property.neighborhood}` : ""}
+                  {property.listingType ? ` • ${property.listingType}` : ""}
+                </p>
+                {property.price && (
+                  <p className="mt-1 text-lg font-semibold text-white">
+                    {new Intl.NumberFormat("bs-BA", {
+                      style: "currency",
+                      currency: "BAM",
+                      minimumFractionDigits: 0,
+                    }).format(property.price)}
+                    {property.listingType === "rent" ? "/mj" : ""}
+                  </p>
+                )}
+                <button
+                  type="button"
+                  onClick={handleCardClick}
+                  className="mt-4 inline-flex items-center rounded-full bg-white/90 px-4 py-2 text-sm font-semibold text-gray-900 shadow hover:bg-white"
+                >
+                  View property
+                </button>
+              </div>
+            </div>
+          );
+        })}
+
+        {carouselItems.length === 0 && (
+          <div className="flex h-full items-center justify-center bg-gray-200">
+            <span className="text-gray-500">No properties to display</span>
           </div>
-        ))}
+        )}
       </div>
 
       {/* Navigation Buttons */}
-      {carouselImages.length > 1 && (
+      {carouselItems.length > 1 && (
         <>
-          {/* Previous Button */}
           <button
             onClick={goToPrevious}
             className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow-lg transition-all hover:bg-white hover:scale-110 focus:outline-none focus:ring-2 focus:ring-gray-900"
-            aria-label="Previous image"
+            aria-label="Previous property"
           >
             <svg
               className="h-6 w-6 text-gray-900"
@@ -102,11 +182,10 @@ const ImageCarousel = ({ images = [], autoPlayInterval = 5000 }) => {
             </svg>
           </button>
 
-          {/* Next Button */}
           <button
             onClick={goToNext}
             className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow-lg transition-all hover:bg-white hover:scale-110 focus:outline-none focus:ring-2 focus:ring-gray-900"
-            aria-label="Next image"
+            aria-label="Next property"
           >
             <svg
               className="h-6 w-6 text-gray-900"
@@ -126,11 +205,11 @@ const ImageCarousel = ({ images = [], autoPlayInterval = 5000 }) => {
       )}
 
       {/* Dots Indicator */}
-      {carouselImages.length > 1 && (
+      {carouselItems.length > 1 && (
         <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2">
-          {carouselImages.map((_, index) => (
+          {carouselItems.map((property, index) => (
             <button
-              key={index}
+              key={property.id}
               onClick={() => goToSlide(index)}
               className={`h-2 rounded-full transition-all ${
                 index === currentIndex
