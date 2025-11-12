@@ -61,14 +61,20 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const register = async (email, firstName, lastName, password) => {
+  const register = async (email, firstName, lastName, username, password) => {
     try {
       const response = await fetch(`${API_URL}/auth/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email, firstName, lastName, password }),
+        body: JSON.stringify({
+          email,
+          firstName,
+          lastName,
+          username,
+          password,
+        }),
       });
 
       const data = await response.json();
@@ -105,6 +111,35 @@ export const AuthProvider = ({ children }) => {
     };
   }, []);
 
+  const updateProfile = async (payload) => {
+    try {
+      const headers = getAuthHeaders();
+      const response = await fetch(`${API_URL}/auth/profile`, {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return {
+          success: false,
+          error: data.error || "Failed to update profile",
+        };
+      }
+
+      if (data.user) {
+        setUser(data.user);
+        localStorage.setItem("user", JSON.stringify(data.user));
+      }
+
+      return { success: true, user: data.user };
+    } catch (error) {
+      return { success: false, error: "Network error. Please try again." };
+    }
+  };
+
   const value = {
     user,
     token,
@@ -112,6 +147,7 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     logout,
+    updateProfile,
     isAuthenticated: !!token,
     getAuthHeaders,
   };

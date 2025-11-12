@@ -6,6 +6,7 @@ function Register() {
   const [email, setEmail] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
@@ -39,8 +40,19 @@ function Register() {
       return;
     }
 
+    if (!username.trim()) {
+      setError("Username is required");
+      return;
+    }
+
     setLoading(true);
-    const result = await register(email, firstName, lastName, password);
+    const result = await register(
+      email,
+      firstName,
+      lastName,
+      username,
+      password
+    );
 
     if (result.success) {
       // If token is returned, user is automatically logged in
@@ -107,6 +119,18 @@ function Register() {
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-900">
+              Username
+            </label>
+            <input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Choose a unique username"
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-gray-400"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-900">
               Password
             </label>
             <input
@@ -143,6 +167,12 @@ function Register() {
           Already have an account?{" "}
           <a className="font-semibold text-gray-900" href="/login">
             Sign in
+          </a>
+        </p>
+        <p className="mt-2 text-center text-xs text-gray-500">
+          Forgot your password?{" "}
+          <a className="font-semibold text-gray-800" href="/forgot-password">
+            Reset it here (coming soon)
           </a>
         </p>
       </div>

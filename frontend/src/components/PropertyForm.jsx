@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { BOSNIA_MAIN_CITIES, CITY_NEIGHBORHOODS } from "../data/locations";
 
 const defaultValues = {
   title: "",
@@ -128,6 +129,28 @@ function PropertyForm({
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
+  const neighborhoodsForCity = useMemo(() => {
+    const normalizedCity = formData.city?.trim();
+    const predefined = CITY_NEIGHBORHOODS[normalizedCity] || [];
+    if (
+      normalizedCity &&
+      formData.neighborhood &&
+      formData.neighborhood.trim() !== "" &&
+      !predefined.includes(formData.neighborhood)
+    ) {
+      return [...predefined, formData.neighborhood];
+    }
+    return predefined;
+  }, [formData.city, formData.neighborhood]);
+
+  const availableCities = useMemo(() => {
+    const cities = [...BOSNIA_MAIN_CITIES];
+    if (formData.city && !cities.includes(formData.city)) {
+      cities.push(formData.city);
+    }
+    return cities;
+  }, [formData.city]);
+
   useEffect(() => {
     setFormData(mappedInitialValues);
   }, [mappedInitialValues]);
@@ -141,6 +164,15 @@ function PropertyForm({
     setFormData((prev) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
+    }));
+  };
+
+  const handleCityChange = (event) => {
+    const { value } = event.target;
+    setFormData((prev) => ({
+      ...prev,
+      city: value,
+      neighborhood: "",
     }));
   };
 
@@ -303,15 +335,20 @@ function PropertyForm({
           <label className="mb-1 block text-sm font-medium text-gray-900">
             City *
           </label>
-          <input
-            type="text"
+          <select
             name="city"
             value={formData.city}
-            onChange={handleChange}
+            onChange={handleCityChange}
             required
             className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-gray-400"
-            placeholder="Sarajevo"
-          />
+          >
+            <option value="">Select a city</option>
+            {availableCities.map((city) => (
+              <option key={city} value={city}>
+                {city}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div>
@@ -333,14 +370,30 @@ function PropertyForm({
           <label className="mb-1 block text-sm font-medium text-gray-900">
             Neighborhood
           </label>
-          <input
-            type="text"
-            name="neighborhood"
-            value={formData.neighborhood}
-            onChange={handleChange}
-            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-gray-400"
-            placeholder="Neighborhood name"
-          />
+          {neighborhoodsForCity.length > 0 ? (
+            <select
+              name="neighborhood"
+              value={formData.neighborhood}
+              onChange={handleChange}
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-gray-400"
+            >
+              <option value="">All neighborhoods</option>
+              {neighborhoodsForCity.map((neighborhood) => (
+                <option key={neighborhood} value={neighborhood}>
+                  {neighborhood}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <input
+              type="text"
+              name="neighborhood"
+              value={formData.neighborhood}
+              onChange={handleChange}
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-gray-400"
+              placeholder="Neighborhood name"
+            />
+          )}
         </div>
       </section>
 

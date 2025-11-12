@@ -5,6 +5,7 @@ import { User } from "./entity/user";
 import cors from "cors";
 import authRoutes from "./routes/auth";
 import propertiesRoutes from "./routes/properties";
+import messagesRoutes from "./routes/messages";
 import { authenticateToken, AuthRequest } from "./middleware/auth";
 
 const app = express();
@@ -35,6 +36,9 @@ app.use("/auth", authRoutes);
 
 // Properties routes
 app.use("/properties", propertiesRoutes);
+
+// Messages routes
+app.use("/messages", messagesRoutes);
 
 // Example protected route (requires authentication)
 app.get("/profile", authenticateToken, async (req: Request, res: Response) => {

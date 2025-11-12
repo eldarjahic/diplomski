@@ -2,7 +2,23 @@ import { useState, useEffect } from "react";
 import PropertyCard from "./PropertyCard";
 import PropertyModal from "./PropertyModal";
 
-function PropertyList({ listingType, city, minPrice, maxPrice }) {
+function PropertyList({
+  listingType,
+  city = "",
+  neighborhood = "",
+  minPrice = "",
+  maxPrice = "",
+  propertyType = "",
+  minBedrooms = "",
+  minBathrooms = "",
+  minArea = "",
+  maxArea = "",
+  minParking = "",
+  furnished = false,
+  balcony = false,
+  elevator = false,
+  heating = false,
+}) {
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -11,7 +27,23 @@ function PropertyList({ listingType, city, minPrice, maxPrice }) {
 
   useEffect(() => {
     fetchProperties();
-  }, [listingType, city, minPrice, maxPrice]);
+  }, [
+    listingType,
+    city,
+    neighborhood,
+    minPrice,
+    maxPrice,
+    propertyType,
+    minBedrooms,
+    minBathrooms,
+    minArea,
+    maxArea,
+    minParking,
+    furnished,
+    balcony,
+    elevator,
+    heating,
+  ]);
 
   const fetchProperties = async () => {
     setLoading(true);
@@ -20,10 +52,23 @@ function PropertyList({ listingType, city, minPrice, maxPrice }) {
       const params = new URLSearchParams();
       params.append("listingType", listingType);
       params.append("status", "available");
-      
-      if (city) params.append("city", city);
+
+      const trimmedCity = city?.trim();
+      if (trimmedCity) params.append("city", trimmedCity);
+      const trimmedNeighborhood = neighborhood?.trim();
+      if (trimmedNeighborhood) params.append("neighborhood", trimmedNeighborhood);
       if (minPrice) params.append("minPrice", minPrice);
       if (maxPrice) params.append("maxPrice", maxPrice);
+      if (propertyType) params.append("type", propertyType);
+      if (minBedrooms) params.append("bedrooms", minBedrooms);
+      if (minBathrooms) params.append("bathrooms", minBathrooms);
+      if (minArea) params.append("areaMin", minArea);
+      if (maxArea) params.append("areaMax", maxArea);
+      if (minParking) params.append("parking", minParking);
+      if (furnished) params.append("furnished", "true");
+      if (balcony) params.append("balcony", "true");
+      if (elevator) params.append("elevator", "true");
+      if (heating) params.append("heating", "true");
 
       const response = await fetch(
         `http://localhost:8000/properties?${params.toString()}`

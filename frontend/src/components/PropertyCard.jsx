@@ -1,10 +1,38 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import MessageModal from "./MessageModal";
+
 function PropertyCard({ property, onClick }) {
+  const navigate = useNavigate();
+  const { user, isAuthenticated } = useAuth();
+  const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
+
   const formatPrice = (price) => {
     return new Intl.NumberFormat("bs-BA", {
       style: "currency",
       currency: "BAM",
       minimumFractionDigits: 0,
     }).format(price);
+  };
+
+  const ownerId = property.owner?.id;
+  const ownerName =
+    property.owner?.username ||
+    `${property.owner?.firstName || ""} ${property.owner?.lastName || ""}`.trim() ||
+    property.owner?.email ||
+    "Property owner";
+  const isOwner = user && ownerId && user.id === ownerId;
+
+  const handleMessageClick = (event) => {
+    event.stopPropagation();
+
+    if (!isAuthenticated) {
+      navigate("/login");
+      return;
+    }
+
+    setIsMessageModalOpen(true);
   };
 
   return (
@@ -109,13 +137,37 @@ function PropertyCard({ property, onClick }) {
 
         <div className="flex items-center justify-between border-t border-gray-100 pt-3">
           <span className="text-sm text-gray-600">
-            {property.city}, {property.neighborhood || property.address}
+            {property.city}
+            {property.neighborhood ? `, ${property.neighborhood}` : ""}
           </span>
           <span className="text-xs text-gray-500 capitalize">
             {property.type}
           </span>
         </div>
+
+        {!isOwner && (
+          <div className="mt-4 flex justify-end">
+            <button
+              type="button"
+              onClick={handleMessageClick}
+              className="inline-flex items-center gap-2 rounded-full border border-gray-300 px-3 py-1 text-xs font-semibold text-gray-700 hover:border-gray-400 hover:text-gray-900"
+            >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-2-2H8a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v10a2 2 0 01-2 2h-3l-2 2z" />
+              </svg>
+              Message owner
+            </button>
+          </div>
+        )}
       </div>
+
+      <MessageModal
+        isOpen={isMessageModalOpen}
+        onClose={() => setIsMessageModalOpen(false)}
+        recipientName={ownerName}
+        recipientId={ownerId}
+        property={property}
+      />
     </div>
   );
 }

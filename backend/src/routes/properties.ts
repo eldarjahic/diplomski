@@ -148,12 +148,20 @@ router.get("/", async (req: Request, res: Response) => {
   try {
     const {
       city,
+      neighborhood,
       listingType,
       minPrice,
       maxPrice,
       type,
       bedrooms,
       bathrooms,
+      areaMin,
+      areaMax,
+      parking,
+      furnished,
+      balcony,
+      elevator,
+      heating,
       status,
     } = req.query;
 
@@ -161,10 +169,22 @@ router.get("/", async (req: Request, res: Response) => {
     const queryBuilder = propertyRepository.createQueryBuilder("property");
 
     // Apply filters
-    if (city) {
+    const trimmedCity = typeof city === "string" ? city.trim() : "";
+    if (trimmedCity) {
       queryBuilder.andWhere("LOWER(property.city) LIKE LOWER(:city)", {
-        city: `%${city}%`,
+        city: `%${trimmedCity}%`,
       });
+    }
+
+    const trimmedNeighborhood =
+      typeof neighborhood === "string" ? neighborhood.trim() : "";
+    if (trimmedNeighborhood) {
+      queryBuilder.andWhere(
+        "LOWER(property.neighborhood) LIKE LOWER(:neighborhood)",
+        {
+          neighborhood: `%${trimmedNeighborhood}%`,
+        }
+      );
     }
 
     if (listingType) {
@@ -198,6 +218,48 @@ router.get("/", async (req: Request, res: Response) => {
     if (bathrooms) {
       queryBuilder.andWhere("property.bathrooms >= :bathrooms", {
         bathrooms: Number(bathrooms),
+      });
+    }
+
+    if (areaMin) {
+      queryBuilder.andWhere("property.area >= :areaMin", {
+        areaMin: Number(areaMin),
+      });
+    }
+
+    if (areaMax) {
+      queryBuilder.andWhere("property.area <= :areaMax", {
+        areaMax: Number(areaMax),
+      });
+    }
+
+    if (parking) {
+      queryBuilder.andWhere("property.parking >= :parking", {
+        parking: Number(parking),
+      });
+    }
+
+    if (furnished === "true") {
+      queryBuilder.andWhere("property.furnished = :furnished", {
+        furnished: true,
+      });
+    }
+
+    if (balcony === "true") {
+      queryBuilder.andWhere("property.balcony = :balcony", {
+        balcony: true,
+      });
+    }
+
+    if (elevator === "true") {
+      queryBuilder.andWhere("property.elevator = :elevator", {
+        elevator: true,
+      });
+    }
+
+    if (heating === "true") {
+      queryBuilder.andWhere("property.heating = :heating", {
+        heating: true,
       });
     }
 

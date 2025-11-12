@@ -3,10 +3,12 @@ import {
   PrimaryGeneratedColumn,
   Column,
   ManyToOne,
+  OneToMany,
   CreateDateColumn,
   UpdateDateColumn,
 } from "typeorm";
 import { User } from "./user";
+import { Message } from "./message";
 
 @Entity()
 export class Property {
@@ -94,6 +96,9 @@ export class Property {
   // Relations
   @ManyToOne(() => User, (user) => user.properties)
   owner: User;
+
+  @OneToMany(() => Message, (message) => message.property)
+  messages: Message[];
 
   // Timestamps
   @CreateDateColumn()
