@@ -59,15 +59,33 @@ function Home() {
       {/* Hero */}
       <section className="mx-auto max-w-7xl px-4 py-10 md:py-16">
         <div className="grid items-center gap-8 md:grid-cols-2">
-          <div>
-            <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl md:text-5xl">
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-gray-900 via-gray-800 to-black p-8 shadow-xl">
+            <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-white/10 blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-indigo-400/10 blur-3xl" />
+            <h1 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl md:text-5xl">
               Find a perfect property to suit your lifestyle
             </h1>
-            <p className="mt-4 max-w-prose text-gray-600">
+            <p className="mt-4 max-w-prose text-gray-200">
               Discover curated homes for rent and for sale across top
               neighborhoods. Compare, shortlist, and contact owners or agents in
               one place.
             </p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={() => navigate('/rent')}
+                className="rounded-full border border-white/50 px-5 py-2 text-sm font-semibold text-white/90 hover:bg-white/10"
+              >
+                Explore rentals
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate('/buy')}
+                className="rounded-full border border-white/50 px-5 py-2 text-sm font-semibold text-white/90 hover:bg-white/10"
+              >
+                Browse for sale
+              </button>
+            </div>
 
             {/* Search Bar */}
             <div className="mt-6 rounded-xl border border-gray-200 bg-white p-3 shadow-sm">
@@ -197,7 +215,7 @@ function Home() {
 
       {/* Highlights */}
       <section className="mx-auto max-w-7xl px-4 pb-12">
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {[
             "Verified Listings",
             "Smart Filters",
@@ -216,16 +234,22 @@ function Home() {
               "M3 8l9 6 9-6",
               "M13 7h8m0 0v8m0-8l-8 8-4-4-6 6",
             ];
+            const gradientGlows = [
+              "from-indigo-400/20",
+              "from-emerald-400/20",
+              "from-amber-400/25",
+              "from-rose-400/20",
+            ];
             return (
               <div
                 key={title}
-                className="group relative overflow-hidden rounded-3xl border border-white/10 bg-white/40 p-6 backdrop-blur-xl shadow-lg transition-transform duration-300 hover:-translate-y-1"
+                className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-900 via-gray-800 to-black p-5 shadow-md transition-transform duration-300 hover:-translate-y-1 hover:shadow-lg"
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-white/60 via-white/30 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-                <div className="relative flex h-full flex-col gap-4">
-                  <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-white/60 text-gray-900 shadow">
+                <div className={`pointer-events-none absolute -right-14 -top-14 h-32 w-32 rounded-full bg-gradient-to-br ${gradientGlows[index]} to-transparent blur-2xl transition-opacity duration-300 group-hover:opacity-90`} />
+                <div className="relative flex h-full flex-col gap-3">
+                  <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-white ring-1 ring-white/10 backdrop-blur">
                     <svg
-                      className="h-6 w-6"
+                      className="h-5 w-5"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -239,16 +263,14 @@ function Home() {
                     </svg>
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900">
+                    <h3 className="text-base font-semibold tracking-tight text-white">
                       {title}
                     </h3>
-                    <p className="mt-2 text-sm text-gray-700">
+                    <p className="mt-1 text-xs leading-relaxed text-gray-300">
                       {descriptions[index]}
                     </p>
                   </div>
-                  <div className="mt-auto text-xs font-semibold uppercase tracking-wide text-gray-500">
-                    Learn more →
-                  </div>
+                  <div className="mt-auto h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent" />
                 </div>
               </div>
             );

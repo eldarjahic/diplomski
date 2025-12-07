@@ -91,15 +91,16 @@ const ImageCarousel = ({ autoPlayInterval = DEFAULT_AUTO_PLAY_INTERVAL }) => {
   const currentProperty = carouselItems[currentIndex];
 
   return (
-    <div
-      className="relative h-64 w-full overflow-hidden rounded-2xl shadow-lg md:h-80"
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
-      tabIndex={0}
-      role="button"
-      onKeyDown={handleKeyDown}
-      aria-label="Featured properties carousel"
-    >
+    <div className="relative rounded-3xl bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 p-[2px] md:from-gray-300 md:via-gray-400 md:to-gray-300">
+      <div
+        className="relative h-64 w-full overflow-hidden rounded-2xl bg-white shadow-lg md:h-80"
+        onMouseEnter={() => setIsPaused(true)}
+        onMouseLeave={() => setIsPaused(false)}
+        tabIndex={0}
+        role="button"
+        onKeyDown={handleKeyDown}
+        aria-label="Featured properties carousel"
+      >
       {/* Images Container */}
       <div className="relative h-full w-full">
         {carouselItems.map((property, index) => {
@@ -221,6 +222,7 @@ const ImageCarousel = ({ autoPlayInterval = DEFAULT_AUTO_PLAY_INTERVAL }) => {
           ))}
         </div>
       )}
+      </div>
     </div>
   );
 };
