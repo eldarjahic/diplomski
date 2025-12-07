@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import SettingsModal from "./SettingsModal";
 // Place your logo image at: src/assets/images/logo.png
@@ -15,6 +15,7 @@ function Header() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const { user, isAuthenticated, logout, getAuthHeaders } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const linkClass = ({ isActive }) =>
     isActive
       ? "text-gray-900 font-semibold px-2 py-1 rounded-md"
@@ -70,6 +71,13 @@ function Header() {
     }
   }, [fetchUnreadCount, isAuthenticated]);
 
+  // Also refetch on route changes (ensures badge sync when navigating to/from Messages)
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchUnreadCount();
+    }
+  }, [location, isAuthenticated, fetchUnreadCount]);
+
   useEffect(() => {
     const handleRefresh = (event) => {
       if (!isAuthenticated) {
@@ -110,7 +118,7 @@ function Header() {
     "U";
 
   return (
-    <header className="sticky top-0 z-10 border-b border-gray-200 bg-white">
+    <header className="sticky top-0 z-0 border-b border-gray-200 bg-white">
       <div className="flex h-14 w-full items-center justify-between px-4 md:h-16">
         <div className="flex items-center gap-2">
           {/* Logo loaded from src/assets/images */}
@@ -135,6 +143,11 @@ function Header() {
           <NavLink to="/about" className={linkClass}>
             About Us
           </NavLink>
+          {isAuthenticated && (
+            <NavLink to="/favorites" className={linkClass}>
+              Favorites
+            </NavLink>
+          )}
           {isAuthenticated && (
             <NavLink to="/messages" className={linkClass}>
               <span className="relative flex items-center gap-1">
@@ -344,6 +357,15 @@ function Header() {
             >
               About Us
             </NavLink>
+            {isAuthenticated && (
+              <NavLink
+                to="/favorites"
+                className={linkClass}
+                onClick={() => setOpen(false)}
+              >
+                Favorites
+              </NavLink>
+            )}
             {isAuthenticated && (
               <NavLink
                 to="/messages"

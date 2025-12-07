@@ -14,6 +14,23 @@ const normalizeSubject = (subject: unknown): string | null => {
   return trimmed.length > 0 ? trimmed : null;
 };
 
+/**
+ * @openapi
+ * /messages/unread-count:
+ *   get:
+ *     tags: [Messages]
+ *     summary: Get unread messages count for current user
+ *     responses:
+ *       200:
+ *         description: Unread count
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 count: { type: integer }
+ *       401: { description: Unauthorized }
+ */
 router.get("/unread-count", authenticateToken, async (req: AuthRequest, res) => {
   try {
     const userId = req.user?.userId;
@@ -36,6 +53,35 @@ router.get("/unread-count", authenticateToken, async (req: AuthRequest, res) => 
   }
 });
 
+/**
+ * @openapi
+ * /messages/mark-read:
+ *   patch:
+ *     tags: [Messages]
+ *     summary: Mark messages as read
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [messageIds]
+ *             properties:
+ *               messageIds:
+ *                 type: array
+ *                 items: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Remaining unread count
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 count: { type: integer }
+ *       400: { description: Validation error }
+ *       401: { description: Unauthorized }
+ */
 router.patch("/mark-read", authenticateToken, async (req: AuthRequest, res) => {
   try {
     const userId = req.user?.userId;
@@ -81,6 +127,25 @@ router.patch("/mark-read", authenticateToken, async (req: AuthRequest, res) => {
   }
 });
 
+/**
+ * @openapi
+ * /messages:
+ *   get:
+ *     tags: [Messages]
+ *     summary: List messages for current user
+ *     responses:
+ *       200:
+ *         description: Messages
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 messages:
+ *                   type: array
+ *                   items: { $ref: '#/components/schemas/Message' }
+ *       401: { description: Unauthorized }
+ */
 router.get("/", authenticateToken, async (req: AuthRequest, res) => {
   try {
     const userId = req.user?.userId;
@@ -107,6 +172,31 @@ router.get("/", authenticateToken, async (req: AuthRequest, res) => {
   }
 });
 
+/**
+ * @openapi
+ * /messages:
+ *   post:
+ *     tags: [Messages]
+ *     summary: Send a message
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/MessageCreateRequest'
+ *     responses:
+ *       201:
+ *         description: Created message
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message: { $ref: '#/components/schemas/Message' }
+ *       400: { description: Validation error }
+ *       401: { description: Unauthorized }
+ *       404: { description: Property or recipient not found }
+ */
 router.post("/", authenticateToken, async (req: AuthRequest, res) => {
   try {
     const { recipientId, propertyId, subject, body } = req.body || {};

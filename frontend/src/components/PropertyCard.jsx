@@ -2,11 +2,13 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import MessageModal from "./MessageModal";
+import { useFavorites } from "../context/FavoritesContext";
 
 function PropertyCard({ property, onClick }) {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
   const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
+  const { isFavorite, toggleFavorite } = useFavorites();
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat("bs-BA", {
@@ -35,6 +37,19 @@ function PropertyCard({ property, onClick }) {
     setIsMessageModalOpen(true);
   };
 
+  const onToggleFavorite = async (event) => {
+    event.stopPropagation();
+    if (!isAuthenticated) {
+      navigate("/login");
+      return;
+    }
+    try {
+      await toggleFavorite(property.id);
+    } catch (error) {
+      console.error("Favorite toggle failed", error);
+    }
+  };
+
   return (
     <div
       onClick={onClick}
@@ -56,10 +71,33 @@ function PropertyCard({ property, onClick }) {
             <span className="text-gray-400">No Image</span>
           </div>
         )}
-        <div className="absolute top-3 right-3">
+        <button
+          type="button"
+          onClick={onToggleFavorite}
+          aria-label="Toggle favorite"
+          className="absolute left-3 top-3 rounded-full bg-white/90 p-2 shadow hover:bg-white"
+        >
+          {isFavorite(property.id) ? (
+            <svg className="h-5 w-5 text-red-500" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+            </svg>
+          ) : (
+            <svg className="h-5 w-5 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636l1.318-1.318a4.5 4.5 0 116.364 6.364L12 21l-7.682-7.318a4.5 4.5 0 010-6.364z" />
+            </svg>
+          )}
+        </button>
+        <div className="absolute top-3 left-12 flex flex-col items-start gap-1">
           <span className="rounded-full bg-gray-900 px-3 py-1 text-xs font-semibold text-white">
             {property.listingType === "rent" ? "For Rent" : "For Sale"}
           </span>
+          {property.status === "rented" && (
+            <span className="rounded-full bg-red-600/90 px-3 py-1 text-[10px] font-semibold text-white">
+              {property.rentedUntil
+                ? `Rented until ${new Date(property.rentedUntil).toLocaleDateString()}`
+                : "Rented"}
+            </span>
+          )}
         </div>
       </div>
 

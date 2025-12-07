@@ -51,7 +51,7 @@ function PropertyList({
     try {
       const params = new URLSearchParams();
       params.append("listingType", listingType);
-      params.append("status", "available");
+      // Show all statuses by default so rented/sold items remain visible
 
       const trimmedCity = city?.trim();
       if (trimmedCity) params.append("city", trimmedCity);

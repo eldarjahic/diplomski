@@ -308,11 +308,16 @@ function Messages() {
           )
         );
 
+        // Update header badge via returned count (if available)
         window.dispatchEvent(
           new CustomEvent("messages:refresh", {
             detail: typeof data.count === "number" ? data.count : undefined,
           })
         );
+        // Fallback: force refetch to avoid any drift
+        if (typeof data.count !== "number") {
+          window.dispatchEvent(new CustomEvent("messages:refresh"));
+        }
       } catch (error) {
         console.error("Failed to mark messages as read", error);
       }
@@ -535,6 +540,12 @@ function Messages() {
                 rows={2}
                 value={draftMessage}
                 onChange={(event) => setDraftMessage(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" && !event.shiftKey) {
+                    event.preventDefault();
+                    handleSendMessage(event);
+                  }
+                }}
                 placeholder="Write a message..."
                 className="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-gray-400"
               />

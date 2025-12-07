@@ -123,11 +123,88 @@ const preparePropertyData = (
       data.heating !== undefined
         ? Boolean(data.heating)
         : existingProperty?.heating ?? false,
+    // Extended attributes
+    availableFrom: data.availableFrom
+      ? new Date(data.availableFrom)
+      : existingProperty?.availableFrom ?? null,
+    leaseTermMonths: parseNumberField(
+      data.leaseTermMonths,
+      "leaseTermMonths",
+      existingProperty?.leaseTermMonths ?? null
+    ),
+    depositAmount: parseNumberField(
+      data.depositAmount,
+      "depositAmount",
+      existingProperty?.depositAmount ?? null
+    ),
+    utilitiesIncluded:
+      data.utilitiesIncluded !== undefined
+        ? Boolean(data.utilitiesIncluded)
+        : existingProperty?.utilitiesIncluded ?? false,
+    petFriendly:
+      data.petFriendly !== undefined
+        ? Boolean(data.petFriendly)
+        : existingProperty?.petFriendly ?? false,
+    smokingAllowed:
+      data.smokingAllowed !== undefined
+        ? Boolean(data.smokingAllowed)
+        : existingProperty?.smokingAllowed ?? false,
+    floor: parseNumberField(
+      data.floor,
+      "floor",
+      existingProperty?.floor ?? null
+    ),
+    totalFloors: parseNumberField(
+      data.totalFloors,
+      "totalFloors",
+      existingProperty?.totalFloors ?? null
+    ),
+    yearBuilt: parseNumberField(
+      data.yearBuilt,
+      "yearBuilt",
+      existingProperty?.yearBuilt ?? null
+    ),
+    energyClass: data.energyClass ?? existingProperty?.energyClass ?? null,
+    heatingType: data.heatingType ?? existingProperty?.heatingType ?? null,
+    parkingType: data.parkingType ?? existingProperty?.parkingType ?? null,
+    airConditioning:
+      data.airConditioning !== undefined
+        ? Boolean(data.airConditioning)
+        : existingProperty?.airConditioning ?? false,
+    garden:
+      data.garden !== undefined
+        ? Boolean(data.garden)
+        : existingProperty?.garden ?? false,
+    storage:
+      data.storage !== undefined
+        ? Boolean(data.storage)
+        : existingProperty?.storage ?? false,
     phone: data.phone ?? existingProperty?.phone ?? null,
     status: data.status ?? existingProperty?.status ?? "available",
     googleMapsUrl:
       data.googleMapsUrl ?? existingProperty?.googleMapsUrl ?? null,
   };
+
+  // Auto-calc rentedUntil on create/update based on leaseTermMonths when status is 'rented'
+  try {
+    const effectiveStatus = cleanData.status;
+    const monthsVal =
+      typeof cleanData.leaseTermMonths === "number"
+        ? cleanData.leaseTermMonths
+        : null;
+    if (effectiveStatus === "rented" && monthsVal && monthsVal > 0) {
+      const start =
+        cleanData.availableFrom instanceof Date &&
+        !Number.isNaN(cleanData.availableFrom.getTime())
+          ? cleanData.availableFrom
+          : new Date();
+      const until = new Date(start);
+      until.setMonth(until.getMonth() + monthsVal);
+      (cleanData as any).rentedUntil = until;
+    } else if (effectiveStatus !== "rented") {
+      (cleanData as any).rentedUntil = null;
+    }
+  } catch {}
 
   if (images.length > 0) {
     cleanData.images = images;
@@ -144,6 +221,40 @@ const preparePropertyData = (
 };
 
 // Get all properties with optional filters
+/**
+ * @openapi
+ * /properties:
+ *   get:
+ *     tags: [Properties]
+ *     summary: List properties with optional filters
+ *     parameters:
+ *       - in: query
+ *         name: city
+ *         schema: { type: string }
+ *       - in: query
+ *         name: neighborhood
+ *         schema: { type: string }
+ *       - in: query
+ *         name: listingType
+ *         schema: { type: string, enum: [rent, buy] }
+ *       - in: query
+ *         name: type
+ *         schema: { type: string, enum: [house, apartment, studio, land, commercial] }
+ *       - in: query
+ *         name: minPrice
+ *         schema: { type: number }
+ *       - in: query
+ *         name: maxPrice
+ *         schema: { type: number }
+ *     responses:
+ *       200:
+ *         description: Array of properties
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items: { $ref: '#/components/schemas/Property' }
+ */
 router.get("/", async (req: Request, res: Response) => {
   try {
     const {
@@ -265,11 +376,6 @@ router.get("/", async (req: Request, res: Response) => {
 
     if (status) {
       queryBuilder.andWhere("property.status = :status", { status });
-    } else {
-      // Default: only show available properties
-      queryBuilder.andWhere("property.status = :status", {
-        status: "available",
-      });
     }
 
     queryBuilder
@@ -286,6 +392,22 @@ router.get("/", async (req: Request, res: Response) => {
 });
 
 // Get properties for the authenticated user
+/**
+ * @openapi
+ * /properties/my:
+ *   get:
+ *     tags: [Properties]
+ *     summary: List properties of current user
+ *     responses:
+ *       200:
+ *         description: Array of properties
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items: { $ref: '#/components/schemas/Property' }
+ *       401: { description: Unauthorized }
+ */
 router.get("/my", authenticateToken, async (req: Request, res: Response) => {
   try {
     const userId = (req as AuthRequest).user?.userId;
@@ -308,12 +430,32 @@ router.get("/my", authenticateToken, async (req: Request, res: Response) => {
 });
 
 // Get single property by ID
+/**
+ * @openapi
+ * /properties/{id}:
+ *   get:
+ *     tags: [Properties]
+ *     summary: Get a property by ID
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Property
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Property'
+ *       404: { description: Property not found }
+ */
 router.get("/:id", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const propertyRepository = AppDataSource.getRepository(Property);
 
-    const property = await propertyRepository.findOne({
+    let property = await propertyRepository.findOne({
       where: { id: Number(id) },
       relations: ["owner"],
     });
@@ -321,6 +463,17 @@ router.get("/:id", async (req: Request, res: Response) => {
     if (!property) {
       return res.status(404).send({ error: "Property not found" });
     }
+
+    // Increment views (best-effort; ignore errors)
+    try {
+      await propertyRepository
+        .createQueryBuilder()
+        .update(Property)
+        .set({ viewsCount: () => `"viewsCount" + 1` })
+        .where("id = :id", { id: Number(id) })
+        .execute();
+      property.viewsCount += 1;
+    } catch {}
 
     res.send(property);
   } catch (error) {
@@ -330,6 +483,28 @@ router.get("/:id", async (req: Request, res: Response) => {
 });
 
 // Create new property (requires authentication)
+/**
+ * @openapi
+ * /properties:
+ *   post:
+ *     tags: [Properties]
+ *     summary: Create a new property
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/PropertyCreateRequest'
+ *     responses:
+ *       201:
+ *         description: Created property
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Property'
+ *       400: { description: Validation error }
+ *       401: { description: Unauthorized }
+ */
 router.post("/", authenticateToken, async (req: Request, res: Response) => {
   try {
     const propertyData = req.body;
@@ -368,6 +543,35 @@ router.post("/", authenticateToken, async (req: Request, res: Response) => {
 });
 
 // Update property (requires authentication)
+/**
+ * @openapi
+ * /properties/{id}:
+ *   put:
+ *     tags: [Properties]
+ *     summary: Update an existing property
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/PropertyUpdateRequest'
+ *     responses:
+ *       200:
+ *         description: Updated property
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Property'
+ *       400: { description: Validation error }
+ *       401: { description: Unauthorized }
+ *       403: { description: Forbidden }
+ *       404: { description: Property not found }
+ */
 router.put("/:id", authenticateToken, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -411,7 +615,93 @@ router.put("/:id", authenticateToken, async (req: Request, res: Response) => {
   }
 });
 
+// Update status (sold / rented); if rented and months provided, set rentedUntil
+router.patch(
+  "/:id/status",
+  authenticateToken,
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { status, months } = req.body || {};
+      const userId = (req as AuthRequest).user?.userId;
+      if (!userId) return res.status(401).send({ error: "Unauthorized" });
+
+      const propertyRepository = AppDataSource.getRepository(Property);
+      const property = await propertyRepository.findOne({
+        where: { id: Number(id) },
+        relations: ["owner"],
+      });
+      if (!property)
+        return res.status(404).send({ error: "Property not found" });
+      if (property.owner.id !== userId)
+        return res.status(403).send({ error: "Forbidden" });
+
+      if (
+        !["available", "sold", "rented", "pending"].includes(String(status))
+      ) {
+        return res.status(400).send({ error: "Invalid status" });
+      }
+
+      // Listing-type sanity checks
+      if (status === "sold" && property.listingType !== "buy") {
+        return res
+          .status(400)
+          .send({ error: "Only 'buy' listings can be marked as sold" });
+      }
+      if (status === "rented" && property.listingType !== "rent") {
+        return res
+          .status(400)
+          .send({ error: "Only 'rent' listings can be marked as rented" });
+      }
+
+      property.status = status;
+      if (status === "rented") {
+        const m =
+          Number(months) > 0
+            ? Number(months)
+            : property.leaseTermMonths && Number(property.leaseTermMonths) > 0
+            ? Number(property.leaseTermMonths)
+            : 0;
+
+        if (m > 0) {
+          const start = new Date();
+          const until = new Date(start);
+          until.setMonth(until.getMonth() + m);
+          property.rentedUntil = until;
+        } else {
+          property.rentedUntil = null;
+        }
+      } else if (status !== "rented") {
+        property.rentedUntil = null;
+      }
+
+      const saved = await propertyRepository.save(property);
+      res.send(saved);
+    } catch (error) {
+      console.error("Error updating property status:", error);
+      res.status(500).send({ error: "Failed to update status" });
+    }
+  }
+);
+
 // Delete property (requires authentication)
+/**
+ * @openapi
+ * /properties/{id}:
+ *   delete:
+ *     tags: [Properties]
+ *     summary: Delete a property
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200: { description: Property deleted }
+ *       401: { description: Unauthorized }
+ *       403: { description: Forbidden }
+ *       404: { description: Property not found }
+ */
 router.delete(
   "/:id",
   authenticateToken,

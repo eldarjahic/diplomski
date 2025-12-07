@@ -61,6 +61,7 @@ function AddProperty() {
         onSuccess={handleSuccess}
         submitLabel="List Property"
         successMessage="Property listed successfully!"
+        showStatusField
       />
     </main>
   );

@@ -6,15 +6,27 @@ import cors from "cors";
 import authRoutes from "./routes/auth";
 import propertiesRoutes from "./routes/properties";
 import messagesRoutes from "./routes/messages";
+import favoritesRoutes from "./routes/favorites";
+import contactRoutes from "./routes/contact";
 import { authenticateToken, AuthRequest } from "./middleware/auth";
+import swaggerUi from "swagger-ui-express";
+import { swaggerSpec } from "./docs/swagger";
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-// allow localhost:3000 to access the api
-app.use(cors({ origin: "http://localhost:5173" }));
+// allow frontend dev/preview to access the api
+const allowedOrigins = [
+  process.env.FRONTEND_URL || "http://localhost:5173",
+  "http://localhost:4173",
+];
+app.use(cors({ origin: allowedOrigins }));
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+
+// Swagger
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.get("/api-docs.json", (_req: Request, res: Response) => res.json(swaggerSpec));
 
 // Routes
 app.get("/", (req: Request, res: Response) => {
@@ -40,6 +52,10 @@ app.use("/properties", propertiesRoutes);
 // Messages routes
 app.use("/messages", messagesRoutes);
 
+// Favorites routes
+app.use("/favorites", favoritesRoutes);
+// Contact routes
+app.use("/contact", contactRoutes);
 // Example protected route (requires authentication)
 app.get("/profile", authenticateToken, async (req: Request, res: Response) => {
   const userId = (req as AuthRequest).user?.userId;

@@ -12,6 +12,7 @@ function MyProperties() {
   const [error, setError] = useState("");
   const [selectedProperty, setSelectedProperty] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -60,6 +61,37 @@ function MyProperties() {
     navigate(`/properties/${selectedProperty.id}/edit`);
   };
 
+  const handleDeleteSelected = async () => {
+    if (!selectedProperty) return;
+    const id = selectedProperty.id;
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this property? This action cannot be undone."
+    );
+    if (!confirmed) return;
+
+    try {
+      setDeletingId(id);
+      const response = await fetch(`http://localhost:8000/properties/${id}`, {
+        method: "DELETE",
+        headers: getAuthHeaders(),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to delete property");
+      }
+
+      setProperties((prev) => prev.filter((p) => p.id !== id));
+      closeModal();
+    } catch (err) {
+      console.error("Error deleting property", err);
+      alert(err.message || "Failed to delete property");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   if (!isAuthenticated) {
     return (
       <main className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-7xl items-center justify-center px-4 py-12">
@@ -87,7 +119,8 @@ function MyProperties() {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">My Properties</h1>
           <p className="mt-1 text-gray-600">
-            Manage the listings you have created with your LD Nekretnine account.
+            Manage the listings you have created with your LD Nekretnine
+            account.
           </p>
         </div>
         <button
@@ -111,7 +144,9 @@ function MyProperties() {
         </div>
       ) : properties.length === 0 ? (
         <div className="rounded-lg border border-gray-200 bg-gray-50 p-12 text-center">
-          <p className="text-lg text-gray-600">You haven't listed any properties yet.</p>
+          <p className="text-lg text-gray-600">
+            You haven't listed any properties yet.
+          </p>
           <p className="mt-2 text-sm text-gray-500">
             Create your first listing to see it here.
           </p>
@@ -133,6 +168,17 @@ function MyProperties() {
               >
                 Edit
               </button>
+              <button
+                onClick={async (event) => {
+                  event.stopPropagation();
+                  setSelectedProperty(property);
+                  await handleDeleteSelected();
+                }}
+                disabled={deletingId === property.id}
+                className="absolute right-3 top-10 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-red-600 shadow hover:bg-white disabled:opacity-60"
+              >
+                {deletingId === property.id ? "Deleting..." : "Delete"}
+              </button>
             </div>
           ))}
         </div>
@@ -144,6 +190,7 @@ function MyProperties() {
         onClose={closeModal}
         isOwner={selectedProperty?.owner?.id === user?.id}
         onEdit={handleEditProperty}
+        onDelete={handleDeleteSelected}
       />
     </main>
   );

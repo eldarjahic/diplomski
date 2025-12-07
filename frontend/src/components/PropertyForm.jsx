@@ -20,6 +20,22 @@ const defaultValues = {
   heating: false,
   phone: "",
   status: "available",
+  // Extended fields
+  availableFrom: "",
+  leaseTermMonths: "",
+  depositAmount: "",
+  utilitiesIncluded: false,
+  petFriendly: false,
+  smokingAllowed: false,
+  floor: "",
+  totalFloors: "",
+  yearBuilt: "",
+  energyClass: "",
+  heatingType: "",
+  parkingType: "",
+  airConditioning: false,
+  garden: false,
+  storage: false,
 };
 
 const statusOptions = [
@@ -81,6 +97,38 @@ const mapInitialValues = (initialData) => {
     heating: Boolean(initialData.heating),
     phone: initialData.phone ?? defaultValues.phone,
     status: initialData.status ?? defaultValues.status,
+    availableFrom: initialData.availableFrom
+      ? String(initialData.availableFrom).slice(0, 10)
+      : defaultValues.availableFrom,
+    leaseTermMonths:
+      initialData.leaseTermMonths !== undefined && initialData.leaseTermMonths !== null
+        ? String(initialData.leaseTermMonths)
+        : defaultValues.leaseTermMonths,
+    depositAmount:
+      initialData.depositAmount !== undefined && initialData.depositAmount !== null
+        ? String(initialData.depositAmount)
+        : defaultValues.depositAmount,
+    utilitiesIncluded: Boolean(initialData.utilitiesIncluded),
+    petFriendly: Boolean(initialData.petFriendly),
+    smokingAllowed: Boolean(initialData.smokingAllowed),
+    floor:
+      initialData.floor !== undefined && initialData.floor !== null
+        ? String(initialData.floor)
+        : defaultValues.floor,
+    totalFloors:
+      initialData.totalFloors !== undefined && initialData.totalFloors !== null
+        ? String(initialData.totalFloors)
+        : defaultValues.totalFloors,
+    yearBuilt:
+      initialData.yearBuilt !== undefined && initialData.yearBuilt !== null
+        ? String(initialData.yearBuilt)
+        : defaultValues.yearBuilt,
+    energyClass: initialData.energyClass ?? defaultValues.energyClass,
+    heatingType: initialData.heatingType ?? defaultValues.heatingType,
+    parkingType: initialData.parkingType ?? defaultValues.parkingType,
+    airConditioning: Boolean(initialData.airConditioning),
+    garden: Boolean(initialData.garden),
+    storage: Boolean(initialData.storage),
   };
 };
 
@@ -216,6 +264,27 @@ function PropertyForm({
         formData.parking !== "" && formData.parking !== null
           ? Number(formData.parking)
           : null,
+      leaseTermMonths:
+        formData.leaseTermMonths !== "" && formData.leaseTermMonths !== null
+          ? Number(formData.leaseTermMonths)
+          : null,
+      depositAmount:
+        formData.depositAmount !== "" && formData.depositAmount !== null
+          ? Number(formData.depositAmount)
+          : null,
+      floor:
+        formData.floor !== "" && formData.floor !== null
+          ? Number(formData.floor)
+          : null,
+      totalFloors:
+        formData.totalFloors !== "" && formData.totalFloors !== null
+          ? Number(formData.totalFloors)
+          : null,
+      yearBuilt:
+        formData.yearBuilt !== "" && formData.yearBuilt !== null
+          ? Number(formData.yearBuilt)
+          : null,
+      availableFrom: formData.availableFrom || null,
       images: uploadedImages,
       imageUrl: uploadedImages[0],
     };
@@ -404,7 +473,7 @@ function PropertyForm({
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-900">
-              Price (€) *
+              Price (BAM) *
             </label>
             <input
               type="number"
@@ -546,6 +615,214 @@ function PropertyForm({
             </select>
           </div>
         )}
+      </section>
+
+      {/* Rent Details (only for rent) */}
+      {formData.listingType === "rent" && (
+        <section className="space-y-4 border-t border-gray-200 pt-6">
+          <h2 className="text-xl font-semibold text-gray-900">Rent Details</h2>
+
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div>
+              <label className="mb-1 block text-sm font-medium text-gray-900">
+                Available From
+              </label>
+              <input
+                type="date"
+                name="availableFrom"
+                value={formData.availableFrom}
+                onChange={handleChange}
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-gray-400"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-gray-900">
+                Lease Term (months)
+              </label>
+              <input
+                type="number"
+                name="leaseTermMonths"
+                value={formData.leaseTermMonths}
+                onChange={handleChange}
+                min="0"
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-gray-400"
+                placeholder="12"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-gray-900">
+              Deposit Amount (BAM)
+              </label>
+              <input
+                type="number"
+                name="depositAmount"
+                value={formData.depositAmount}
+                onChange={handleChange}
+                min="0"
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-gray-400"
+                placeholder="500"
+              />
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-3">
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                name="utilitiesIncluded"
+                checked={formData.utilitiesIncluded}
+                onChange={handleChange}
+                className="rounded border-gray-300"
+              />
+              <span className="text-sm text-gray-700">Utilities Included</span>
+            </label>
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                name="petFriendly"
+                checked={formData.petFriendly}
+                onChange={handleChange}
+                className="rounded border-gray-300"
+              />
+              <span className="text-sm text-gray-700">Pet Friendly</span>
+            </label>
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                name="smokingAllowed"
+                checked={formData.smokingAllowed}
+                onChange={handleChange}
+                className="rounded border-gray-300"
+              />
+              <span className="text-sm text-gray-700">Smoking Allowed</span>
+            </label>
+          </div>
+        </section>
+      )}
+
+      {/* Additional Details */}
+      <section className="space-y-4 border-t border-gray-200 pt-6">
+        <h2 className="text-xl font-semibold text-gray-900">Additional Details</h2>
+
+        <div className="grid gap-4 sm:grid-cols-3">
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-900">
+              Floor
+            </label>
+            <input
+              type="number"
+              name="floor"
+              value={formData.floor}
+              onChange={handleChange}
+              min="0"
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-gray-400"
+              placeholder="2"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-900">
+              Total Floors
+            </label>
+            <input
+              type="number"
+              name="totalFloors"
+              value={formData.totalFloors}
+              onChange={handleChange}
+              min="0"
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-gray-400"
+              placeholder="5"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-900">
+              Year Built
+            </label>
+            <input
+              type="number"
+              name="yearBuilt"
+              value={formData.yearBuilt}
+              onChange={handleChange}
+              min="1800"
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-gray-400"
+              placeholder="2005"
+            />
+          </div>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-3">
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-900">
+              Energy Class
+            </label>
+            <input
+              type="text"
+              name="energyClass"
+              value={formData.energyClass}
+              onChange={handleChange}
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-gray-400"
+              placeholder="A, B, C..."
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-900">
+              Heating Type
+            </label>
+            <input
+              type="text"
+              name="heatingType"
+              value={formData.heatingType}
+              onChange={handleChange}
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-gray-400"
+              placeholder="Central, Gas, Electric"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-900">
+              Parking Type
+            </label>
+            <input
+              type="text"
+              name="parkingType"
+              value={formData.parkingType}
+              onChange={handleChange}
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-gray-400"
+              placeholder="Garage, Street, Lot"
+            />
+          </div>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-3 md:grid-cols-4">
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              name="airConditioning"
+              checked={formData.airConditioning}
+              onChange={handleChange}
+              className="rounded border-gray-300"
+            />
+            <span className="text-sm text-gray-700">Air Conditioning</span>
+          </label>
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              name="garden"
+              checked={formData.garden}
+              onChange={handleChange}
+              className="rounded border-gray-300"
+            />
+            <span className="text-sm text-gray-700">Garden</span>
+          </label>
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              name="storage"
+              checked={formData.storage}
+              onChange={handleChange}
+              className="rounded border-gray-300"
+            />
+            <span className="text-sm text-gray-700">Storage</span>
+          </label>
+        </div>
       </section>
 
       {/* Images & Contact */}

@@ -3,10 +3,20 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import MessageModal from "./MessageModal";
 
-function PropertyModal({ property, isOpen, onClose, isOwner = false, onEdit = () => {} }) {
+const API_URL = "http://localhost:8000";
+
+function PropertyModal({
+  property,
+  isOpen,
+  onClose,
+  isOwner = false,
+  onEdit = () => {},
+  onDelete = () => {},
+}) {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
   const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
+  const [rentMonths, setRentMonths] = useState(0);
 
   useEffect(() => {
     const handleEscape = (e) => {
@@ -31,7 +41,9 @@ function PropertyModal({ property, isOpen, onClose, isOwner = false, onEdit = ()
   const ownerId = property.owner?.id;
   const ownerName =
     property.owner?.username ||
-    `${property.owner?.firstName || ""} ${property.owner?.lastName || ""}`.trim() ||
+    `${property.owner?.firstName || ""} ${
+      property.owner?.lastName || ""
+    }`.trim() ||
     property.owner?.email ||
     "Property owner";
 
@@ -56,6 +68,27 @@ function PropertyModal({ property, isOpen, onClose, isOwner = false, onEdit = ()
       currency: "BAM",
       minimumFractionDigits: 0,
     }).format(price);
+  };
+
+  const updateStatus = async (newStatus, months) => {
+    try {
+      const res = await fetch(`${API_URL}/properties/${property.id}/status`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+        },
+        body: JSON.stringify({ status: newStatus, months }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to update status");
+      // rudimentary refresh: update the local object fields
+      property.status = data.status;
+      property.rentedUntil = data.rentedUntil;
+      window.alert("Status updated.");
+    } catch (e) {
+      window.alert(e.message || "Failed to update status");
+    }
   };
 
   return (
@@ -135,7 +168,9 @@ function PropertyModal({ property, isOpen, onClose, isOwner = false, onEdit = ()
                 <div className="text-3xl font-bold text-gray-900">
                   {formatPrice(property.price)}
                   {property.listingType === "rent" && (
-                    <span className="text-lg font-normal text-gray-600">/mj</span>
+                    <span className="text-lg font-normal text-gray-600">
+                      /mj
+                    </span>
                   )}
                 </div>
                 <span className="inline-block rounded-full bg-gray-900 px-3 py-1 text-xs font-semibold text-white">
@@ -262,6 +297,114 @@ function PropertyModal({ property, isOpen, onClose, isOwner = false, onEdit = ()
                     Heating
                   </div>
                 )}
+                {property.utilitiesIncluded && (
+                  <div className="flex items-center gap-2 text-sm text-gray-700">
+                    <svg
+                      className="h-5 w-5 text-green-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                    Utilities Included
+                  </div>
+                )}
+                {property.petFriendly && (
+                  <div className="flex items-center gap-2 text-sm text-gray-700">
+                    <svg
+                      className="h-5 w-5 text-green-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                    Pet Friendly
+                  </div>
+                )}
+                {property.smokingAllowed && (
+                  <div className="flex items-center gap-2 text-sm text-gray-700">
+                    <svg
+                      className="h-5 w-5 text-green-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                    Smoking Allowed
+                  </div>
+                )}
+                {property.airConditioning && (
+                  <div className="flex items-center gap-2 text-sm text-gray-700">
+                    <svg
+                      className="h-5 w-5 text-green-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                    Air Conditioning
+                  </div>
+                )}
+                {property.garden && (
+                  <div className="flex items-center gap-2 text-sm text-gray-700">
+                    <svg
+                      className="h-5 w-5 text-green-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                    Garden
+                  </div>
+                )}
+                {property.storage && (
+                  <div className="flex items-center gap-2 text-sm text-gray-700">
+                    <svg
+                      className="h-5 w-5 text-green-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                    Storage
+                  </div>
+                )}
               </div>
             </div>
 
@@ -279,6 +422,71 @@ function PropertyModal({ property, isOpen, onClose, isOwner = false, onEdit = ()
                   {property.status}
                 </div>
               </div>
+              {property.status === "rented" && property.rentedUntil && (
+                <div>
+                  <div className="text-sm text-gray-600">Rented Until</div>
+                  <div className="font-semibold text-gray-900">
+                    {new Date(property.rentedUntil).toLocaleDateString()}
+                  </div>
+                </div>
+              )}
+              {typeof property.viewsCount === "number" && (
+                <div>
+                  <div className="text-sm text-gray-600">Views</div>
+                  <div className="font-semibold text-gray-900">
+                    {property.viewsCount}
+                  </div>
+                </div>
+              )}
+              {property.availableFrom && (
+                <div>
+                  <div className="text-sm text-gray-600">Available From</div>
+                  <div className="font-semibold text-gray-900">
+                    {new Date(property.availableFrom).toLocaleDateString()}
+                  </div>
+                </div>
+              )}
+              {property.floor !== null && property.floor !== undefined && (
+                <div>
+                  <div className="text-sm text-gray-600">Floor</div>
+                  <div className="font-semibold text-gray-900">
+                    {property.floor}
+                    {property.totalFloors ? ` / ${property.totalFloors}` : ""}
+                  </div>
+                </div>
+              )}
+              {property.yearBuilt && (
+                <div>
+                  <div className="text-sm text-gray-600">Year Built</div>
+                  <div className="font-semibold text-gray-900">
+                    {property.yearBuilt}
+                  </div>
+                </div>
+              )}
+              {property.energyClass && (
+                <div>
+                  <div className="text-sm text-gray-600">Energy Class</div>
+                  <div className="font-semibold text-gray-900">
+                    {property.energyClass}
+                  </div>
+                </div>
+              )}
+              {property.heatingType && (
+                <div>
+                  <div className="text-sm text-gray-600">Heating Type</div>
+                  <div className="font-semibold text-gray-900">
+                    {property.heatingType}
+                  </div>
+                </div>
+              )}
+              {property.parkingType && (
+                <div>
+                  <div className="text-sm text-gray-600">Parking Type</div>
+                  <div className="font-semibold text-gray-900">
+                    {property.parkingType}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Contact & Location */}
@@ -307,20 +515,64 @@ function PropertyModal({ property, isOpen, onClose, isOwner = false, onEdit = ()
                 )}
               </div>
               {isOwnerOfProperty ? (
-                <button
-                  onClick={onEdit}
-                  className="rounded-lg border border-gray-900 px-6 py-3 font-semibold text-gray-900 hover:bg-gray-100"
-                >
-                  Edit Property
-                </button>
+                <div className="flex flex-col items-start gap-3 md:flex-row md:items-center">
+                  <button
+                    onClick={onEdit}
+                    className="rounded-lg border border-gray-900 px-6 py-3 font-semibold text-gray-900 hover:bg-gray-100"
+                  >
+                    Edit Property
+                  </button>
+                  <button
+                    onClick={onDelete}
+                    className="rounded-lg border border-red-600 px-6 py-3 font-semibold text-red-600 hover:bg-red-50"
+                  >
+                    Delete
+                  </button>
+                  {property.listingType === "buy" &&
+                    property.status !== "sold" && (
+                      <button
+                        onClick={() => updateStatus("sold")}
+                        className="rounded-lg border border-gray-300 px-6 py-3 font-semibold text-gray-800 hover:bg-gray-50"
+                      >
+                        Mark as Sold
+                      </button>
+                    )}
+                  {property.listingType === "rent" &&
+                    property.status !== "rented" && (
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() =>
+                            updateStatus(
+                              "rented",
+                              Number(rentMonths) || undefined
+                            )
+                          }
+                          className="rounded-lg border border-gray-300 px-6 py-3 font-semibold text-gray-800 hover:bg-gray-50"
+                        >
+                          Mark Rented
+                        </button>
+                      </div>
+                    )}
+                  {property.listingType === "rent" &&
+                    property.status === "rented" && (
+                      <button
+                        onClick={() => updateStatus("available")}
+                        className="rounded-lg border border-gray-300 px-6 py-3 font-semibold text-gray-800 hover:bg-gray-50"
+                      >
+                        Mark Available
+                      </button>
+                    )}
+                </div>
               ) : (
-                <button
-                  onClick={handleContactOwner}
-                  disabled={!ownerId}
-                  className="rounded-lg bg-gray-900 px-6 py-3 font-semibold text-white hover:bg-black disabled:cursor-not-allowed disabled:bg-gray-400"
-                >
-                  Contact Owner
-                </button>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <button
+                    onClick={handleContactOwner}
+                    disabled={!ownerId}
+                    className="rounded-lg bg-gray-900 px-6 py-3 font-semibold text-white hover:bg-black disabled:cursor-not-allowed disabled:bg-gray-400"
+                  >
+                    Message Owner
+                  </button>
+                </div>
               )}
             </div>
           </div>
@@ -339,4 +591,3 @@ function PropertyModal({ property, isOpen, onClose, isOwner = false, onEdit = ()
 }
 
 export default PropertyModal;
-

@@ -78,6 +78,59 @@ export class Property {
   @Column({ type: "boolean", default: false })
   heating: boolean;
 
+  // Status helpers
+  @Column({ type: "date", nullable: true })
+  rentedUntil: Date | null;
+
+  @Column({ type: "int", default: 0 })
+  viewsCount: number;
+
+  // Rent-specific and extended attributes
+  @Column({ type: "date", nullable: true })
+  availableFrom: Date | null;
+
+  @Column({ type: "int", nullable: true })
+  leaseTermMonths: number | null;
+
+  @Column({ type: "int", nullable: true })
+  depositAmount: number | null;
+
+  @Column({ type: "boolean", default: false })
+  utilitiesIncluded: boolean;
+
+  @Column({ type: "boolean", default: false })
+  petFriendly: boolean;
+
+  @Column({ type: "boolean", default: false })
+  smokingAllowed: boolean;
+
+  @Column({ type: "int", nullable: true })
+  floor: number | null;
+
+  @Column({ type: "int", nullable: true })
+  totalFloors: number | null;
+
+  @Column({ type: "int", nullable: true })
+  yearBuilt: number | null;
+
+  @Column({ type: "varchar", nullable: true })
+  energyClass: string | null;
+
+  @Column({ type: "varchar", nullable: true })
+  heatingType: string | null;
+
+  @Column({ type: "varchar", nullable: true })
+  parkingType: string | null;
+
+  @Column({ type: "boolean", default: false })
+  airConditioning: boolean;
+
+  @Column({ type: "boolean", default: false })
+  garden: boolean;
+
+  @Column({ type: "boolean", default: false })
+  storage: boolean;
+
   // Images
   @Column({ type: "varchar", nullable: true })
   imageUrl: string | null; // Main image URL

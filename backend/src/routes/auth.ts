@@ -8,6 +8,31 @@ import { authenticateToken, AuthRequest } from "../middleware/auth";
 const router = Router();
 
 // Register endpoint
+/**
+ * @openapi
+ * /auth/register:
+ *   post:
+ *     tags: [Auth]
+ *     summary: Register a new user
+ *     security: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/RegisterRequest'
+ *     responses:
+ *       200:
+ *         description: Registered user and JWT token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 token: { type: string }
+ *                 user: { $ref: '#/components/schemas/User' }
+ *       400: { description: Validation error }
+ */
 router.post("/register", async (req: Request, res: Response) => {
   const { email, firstName, lastName, username, password } = req.body;
 
@@ -88,6 +113,31 @@ router.post("/register", async (req: Request, res: Response) => {
 });
 
 // Login endpoint
+/**
+ * @openapi
+ * /auth/login:
+ *   post:
+ *     tags: [Auth]
+ *     summary: Login and obtain JWT
+ *     security: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/LoginRequest'
+ *     responses:
+ *       200:
+ *         description: JWT and user data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 token: { type: string }
+ *                 user: { $ref: '#/components/schemas/User' }
+ *       401: { description: Invalid credentials }
+ */
 router.post("/login", async (req: Request, res: Response) => {
   const { email, password } = req.body;
 
@@ -132,80 +182,127 @@ router.post("/login", async (req: Request, res: Response) => {
   });
 });
 
-router.patch("/profile", authenticateToken, async (req: Request, res: Response) => {
-  try {
-    const { firstName, lastName, email, currentPassword, newPassword } = req.body || {};
-    const userId = (req as AuthRequest).user?.userId;
+/**
+ * @openapi
+ * /auth/profile:
+ *   patch:
+ *     tags: [Auth]
+ *     summary: Update current user profile
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email: { type: string, format: email }
+ *               firstName: { type: string }
+ *               lastName: { type: string }
+ *               currentPassword: { type: string }
+ *               newPassword: { type: string, minLength: 6 }
+ *     responses:
+ *       200:
+ *         description: Updated user
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 user: { $ref: '#/components/schemas/User' }
+ *       400: { description: Validation error }
+ *       401: { description: Unauthorized }
+ *       404: { description: User not found }
+ */
+router.patch(
+  "/profile",
+  authenticateToken,
+  async (req: Request, res: Response) => {
+    try {
+      const { firstName, lastName, email, currentPassword, newPassword } =
+        req.body || {};
+      const userId = (req as AuthRequest).user?.userId;
 
-    if (!userId) {
-      return res.status(401).send({ error: "Unauthorized" });
-    }
-
-    const userRepository = AppDataSource.getRepository(User);
-    const user = await userRepository
-      .createQueryBuilder("user")
-      .addSelect("user.password")
-      .where("user.id = :id", { id: userId })
-      .getOne();
-
-    if (!user) {
-      return res.status(404).send({ error: "User not found" });
-    }
-
-    if (typeof email === "string" && email.trim().toLowerCase() !== user.email.toLowerCase()) {
-      const existingEmail = await userRepository.findOneBy({ email: email.trim() });
-      if (existingEmail && existingEmail.id !== user.id) {
-        return res.status(400).send({ error: "Email is already in use" });
-      }
-      user.email = email.trim();
-    }
-
-    if (typeof firstName === "string" && firstName.trim()) {
-      user.firstName = firstName.trim();
-    }
-
-    if (typeof lastName === "string" && lastName.trim()) {
-      user.lastName = lastName.trim();
-    }
-
-    if (newPassword) {
-      if (!currentPassword) {
-        return res
-          .status(400)
-          .send({ error: "Current password is required to set a new password" });
-      }
-
-      const isCurrentValid = await bcrypt.compare(currentPassword, user.password);
-      if (!isCurrentValid) {
-        return res.status(400).send({ error: "Current password is incorrect" });
+      if (!userId) {
+        return res.status(401).send({ error: "Unauthorized" });
       }
 
-      if (typeof newPassword !== "string" || newPassword.trim().length < 6) {
-        return res
-          .status(400)
-          .send({ error: "New password must be at least 6 characters" });
+      const userRepository = AppDataSource.getRepository(User);
+      const user = await userRepository
+        .createQueryBuilder("user")
+        .addSelect("user.password")
+        .where("user.id = :id", { id: userId })
+        .getOne();
+
+      if (!user) {
+        return res.status(404).send({ error: "User not found" });
       }
 
-      user.password = await bcrypt.hash(newPassword.trim(), 10);
+      if (
+        typeof email === "string" &&
+        email.trim().toLowerCase() !== user.email.toLowerCase()
+      ) {
+        const existingEmail = await userRepository.findOneBy({
+          email: email.trim(),
+        });
+        if (existingEmail && existingEmail.id !== user.id) {
+          return res.status(400).send({ error: "Email is already in use" });
+        }
+        user.email = email.trim();
+      }
+
+      if (typeof firstName === "string" && firstName.trim()) {
+        user.firstName = firstName.trim();
+      }
+
+      if (typeof lastName === "string" && lastName.trim()) {
+        user.lastName = lastName.trim();
+      }
+
+      if (newPassword) {
+        if (!currentPassword) {
+          return res
+            .status(400)
+            .send({
+              error: "Current password is required to set a new password",
+            });
+        }
+
+        const isCurrentValid = await bcrypt.compare(
+          currentPassword,
+          user.password
+        );
+        if (!isCurrentValid) {
+          return res
+            .status(400)
+            .send({ error: "Current password is incorrect" });
+        }
+
+        if (typeof newPassword !== "string" || newPassword.trim().length < 6) {
+          return res
+            .status(400)
+            .send({ error: "New password must be at least 6 characters" });
+        }
+
+        user.password = await bcrypt.hash(newPassword.trim(), 10);
+      }
+
+      const savedUser = await userRepository.save(user);
+
+      res.send({
+        user: {
+          id: savedUser.id,
+          email: savedUser.email,
+          username: savedUser.username,
+          firstName: savedUser.firstName,
+          lastName: savedUser.lastName,
+          role: savedUser.role,
+        },
+      });
+    } catch (error) {
+      console.error("Error updating profile", error);
+      res.status(500).send({ error: "Failed to update profile" });
     }
-
-    const savedUser = await userRepository.save(user);
-
-    res.send({
-      user: {
-        id: savedUser.id,
-        email: savedUser.email,
-        username: savedUser.username,
-        firstName: savedUser.firstName,
-        lastName: savedUser.lastName,
-        role: savedUser.role,
-      },
-    });
-  } catch (error) {
-    console.error("Error updating profile", error);
-    res.status(500).send({ error: "Failed to update profile" });
   }
-});
+);
 
 export default router;
-
