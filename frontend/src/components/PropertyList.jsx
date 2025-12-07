@@ -18,6 +18,7 @@ function PropertyList({
   balcony = false,
   elevator = false,
   heating = false,
+  status = "",
 }) {
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -43,6 +44,7 @@ function PropertyList({
     balcony,
     elevator,
     heating,
+    status,
   ]);
 
   const fetchProperties = async () => {
@@ -51,7 +53,9 @@ function PropertyList({
     try {
       const params = new URLSearchParams();
       params.append("listingType", listingType);
-      // Show all statuses by default so rented/sold items remain visible
+      if (status) {
+        params.append("status", status);
+      }
 
       const trimmedCity = city?.trim();
       if (trimmedCity) params.append("city", trimmedCity);

@@ -53,6 +53,7 @@ function ForRent() {
     maxPrice,
     ...filters,
   });
+  const [availableOnly, setAvailableOnly] = useState(true);
 
   useEffect(() => {
     setCity(locationState.city || "");
@@ -100,13 +101,24 @@ function ForRent() {
             Find the perfect rental property for you
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => setShowFilters((prev) => !prev)}
-          className="inline-flex items-center rounded-full border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:border-gray-400 hover:text-gray-900"
-        >
-          {showFilters ? "Hide filters" : "Additional filters"}
-        </button>
+        <div className="flex items-center gap-3">
+          <label className="flex items-center gap-2 text-sm text-gray-700">
+            <input
+              type="checkbox"
+              checked={availableOnly}
+              onChange={(e) => setAvailableOnly(e.target.checked)}
+              className="rounded border-gray-300 accent-black"
+            />
+            Only available
+          </label>
+          <button
+            type="button"
+            onClick={() => setShowFilters((prev) => !prev)}
+            className="inline-flex items-center rounded-full border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:border-gray-400 hover:text-gray-900"
+          >
+            {showFilters ? "Hide filters" : "Additional filters"}
+          </button>
+        </div>
       </div>
 
       {showFilters && (
@@ -255,6 +267,7 @@ function ForRent() {
         balcony={appliedFilters.balcony}
         elevator={appliedFilters.elevator}
         heating={appliedFilters.heating}
+        status={availableOnly ? "available" : ""}
       />
     </main>
   );
