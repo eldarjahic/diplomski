@@ -7,6 +7,8 @@ services:
       - db
     ports:
       - "8000:3000"
+    env_file:
+      - .env
     environment:
       - CHOKIDAR_USEPOLLING=true
       - DB_HOST=db

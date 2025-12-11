@@ -8,6 +8,7 @@ import propertiesRoutes from "./routes/properties";
 import messagesRoutes from "./routes/messages";
 import favoritesRoutes from "./routes/favorites";
 import contactRoutes from "./routes/contact";
+import mailerRoutes from "./routes/mailer";
 import { authenticateToken, AuthRequest } from "./middleware/auth";
 import swaggerUi from "swagger-ui-express";
 import { swaggerSpec } from "./docs/swagger";
@@ -26,7 +27,9 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 // Swagger
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-app.get("/api-docs.json", (_req: Request, res: Response) => res.json(swaggerSpec));
+app.get("/api-docs.json", (_req: Request, res: Response) =>
+  res.json(swaggerSpec)
+);
 
 // Routes
 app.get("/", (req: Request, res: Response) => {
@@ -56,6 +59,8 @@ app.use("/messages", messagesRoutes);
 app.use("/favorites", favoritesRoutes);
 // Contact routes
 app.use("/contact", contactRoutes);
+// Mailer routes
+app.use("/mailer", mailerRoutes);
 // Example protected route (requires authentication)
 app.get("/profile", authenticateToken, async (req: Request, res: Response) => {
   const userId = (req as AuthRequest).user?.userId;

@@ -1,11 +1,40 @@
 import { Router } from "express";
+import "dotenv/config";
 import { AppDataSource } from "../data-source";
 import { authenticateToken, AuthRequest } from "../middleware/auth";
 import { Message } from "../entity/message";
 import { User } from "../entity/user";
 import { Property } from "../entity/property";
+import nodemailer from "nodemailer";
 
 const router = Router();
+
+// Nodemailer configuration (same as your working version)
+const emailTransporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
+
+// Helper to send email notification (fire-and-forget)
+const sendEmailNotification = async (toEmail: string) => {
+  if (!toEmail || !process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    return;
+  }
+  try {
+    await emailTransporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: toEmail,
+      subject: "You have a new message",
+      text: "Someone sent you a message in the app.",
+    });
+  } catch (err) {
+    // Non-fatal; log and continue
+    console.error("Email notification error:", err);
+  }
+};
 const normalizeSubject = (subject: unknown): string | null => {
   if (typeof subject !== "string") {
     return null;
@@ -31,27 +60,31 @@ const normalizeSubject = (subject: unknown): string | null => {
  *                 count: { type: integer }
  *       401: { description: Unauthorized }
  */
-router.get("/unread-count", authenticateToken, async (req: AuthRequest, res) => {
-  try {
-    const userId = req.user?.userId;
+router.get(
+  "/unread-count",
+  authenticateToken,
+  async (req: AuthRequest, res) => {
+    try {
+      const userId = req.user?.userId;
 
-    if (!userId) {
-      return res.status(401).json({ error: "Unauthorized" });
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      const messageRepository = AppDataSource.getRepository(Message);
+      const count = await messageRepository
+        .createQueryBuilder("message")
+        .where('message."recipientId" = :userId', { userId })
+        .andWhere('message."isRead" = false')
+        .getCount();
+
+      res.json({ count });
+    } catch (error) {
+      console.error("Error fetching unread count", error);
+      res.status(500).json({ error: "Failed to load unread messages" });
     }
-
-    const messageRepository = AppDataSource.getRepository(Message);
-    const count = await messageRepository
-      .createQueryBuilder("message")
-      .where("message.\"recipientId\" = :userId", { userId })
-      .andWhere("message.\"isRead\" = false")
-      .getCount();
-
-    res.json({ count });
-  } catch (error) {
-    console.error("Error fetching unread count", error);
-    res.status(500).json({ error: "Failed to load unread messages" });
   }
-});
+);
 
 /**
  * @openapi
@@ -110,14 +143,14 @@ router.patch("/mark-read", authenticateToken, async (req: AuthRequest, res) => {
       .update(Message)
       .set({ isRead: true })
       .where("id IN (:...ids)", { ids: uniqueIds })
-      .andWhere("\"recipientId\" = :userId", { userId })
-      .andWhere("\"isRead\" = false")
+      .andWhere('"recipientId" = :userId', { userId })
+      .andWhere('"isRead" = false')
       .execute();
 
     const remainingCount = await messageRepository
       .createQueryBuilder("message")
-      .where("message.\"recipientId\" = :userId", { userId })
-      .andWhere("message.\"isRead\" = false")
+      .where('message."recipientId" = :userId', { userId })
+      .andWhere('message."isRead" = false')
       .getCount();
 
     res.json({ count: remainingCount });
@@ -249,7 +282,9 @@ router.post("/", authenticateToken, async (req: AuthRequest, res) => {
         return res.status(400).json({ error: "Recipient is required" });
       }
 
-      recipient = await userRepository.findOne({ where: { id: Number(recipientId) } });
+      recipient = await userRepository.findOne({
+        where: { id: Number(recipientId) },
+      });
 
       if (!recipient) {
         return res.status(404).json({ error: "Recipient not found" });
@@ -257,9 +292,11 @@ router.post("/", authenticateToken, async (req: AuthRequest, res) => {
     }
 
     if (recipient.id === sender.id) {
-      return res.status(400).json({ error: "You cannot send a message to yourself" });
+      return res
+        .status(400)
+        .json({ error: "You cannot send a message to yourself" });
     }
-
+    console.log("OVO SU SENDER I RECIPIENT", sender, recipient);
     const message = messageRepository.create({
       sender,
       recipient,
@@ -274,6 +311,11 @@ router.post("/", authenticateToken, async (req: AuthRequest, res) => {
       where: { id: message.id },
       relations: ["sender", "recipient", "property"],
     });
+
+    // Fire-and-forget: email notification to recipient
+    if (recipient?.email) {
+      sendEmailNotification(recipient.email);
+    }
 
     return res.status(201).json({ message: messageWithRelations ?? message });
   } catch (error) {
