@@ -11,7 +11,7 @@ export const AppDataSource = new DataSource({
   database: process.env.DB_NAME || "diplomski",
   synchronize: false,
   logging: false,
-  entities: [__dirname + "/entity/*.ts"],
-  migrations: [__dirname + "/migration/*.ts"],
+  entities: [__dirname + "/entity/*.{ts,js}"],
+  migrations: [__dirname + "/migration/*.{ts,js}"],
   subscribers: [],
 });
