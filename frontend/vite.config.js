@@ -6,9 +6,6 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   preview: {
-    allowedHosts: [
-      "eldi.deployer3000.halvooo.com",
-      ".deployer3000.halvooo.com",
-    ],
+    allowedHosts: true, // Accept all hosts
   },
 });
