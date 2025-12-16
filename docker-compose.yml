@@ -34,7 +34,7 @@ services:
         condition: service_healthy
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.diplomski-backend.rule=Host(`api.example.com`)"
+      - "traefik.http.routers.diplomski-backend.rule=Host(`eldibackend.deployer3000.halvooo.com`)"
       - "traefik.http.services.diplomski-backend.loadbalancer.server.port=3000"
 
   frontend:
@@ -49,7 +49,7 @@ services:
       - backend
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.diplomski-frontend.rule=Host(`app.example.com`)"
+      - "traefik.http.routers.diplomski-frontend.rule=Host(`eldi.deployer3000.halvooo.com`)"
       - "traefik.http.services.diplomski-frontend.loadbalancer.server.port=4173"
 
 volumes:
