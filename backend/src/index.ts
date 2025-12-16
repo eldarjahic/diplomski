@@ -83,8 +83,13 @@ app.get("/profile", authenticateToken, async (req: Request, res: Response) => {
 
 // Start server after database initialization
 AppDataSource.initialize()
-  .then(() => {
+  .then(async () => {
     console.log("📦 Data Source has been initialized!");
+    
+    // Run migrations
+    console.log("🔄 Running migrations...");
+    await AppDataSource.runMigrations();
+    console.log("✅ Migrations completed!");
 
     app.listen(port, () => {
       console.log(`Server running at http://localhost:${port}`);
