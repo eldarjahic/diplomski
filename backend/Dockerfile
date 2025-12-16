@@ -17,6 +17,7 @@ WORKDIR /usr/src/app
 ENV NODE_ENV=production
 COPY --from=dependencies /usr/src/app/node_modules ./node_modules
 COPY --from=builder /usr/src/app/dist ./dist
+COPY --from=builder /usr/src/app/package.json ./package.json
 EXPOSE 3000
 
-CMD ["node", "dist/index.js"]
+CMD ["sh", "-c", "npx typeorm migration:run -d dist/data-source.js && node dist/index.js"]
