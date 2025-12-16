@@ -6,7 +6,7 @@ import SettingsModal from "./SettingsModal";
 // You can change the filename below if needed
 import logo from "../assets/images/LDNekretnine.png";
 
-const API_URL = "http://localhost:8000";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 function Header() {
   const [open, setOpen] = useState(false);

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import PropertyCard from "../components/PropertyCard";
 import { useFavorites } from "../context/FavoritesContext";
 
-const API_URL = "http://localhost:8000";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 function Favorites() {
   const [properties, setProperties] = useState([]);

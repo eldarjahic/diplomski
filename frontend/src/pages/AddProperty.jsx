@@ -7,7 +7,8 @@ function AddProperty() {
   const navigate = useNavigate();
 
   const handleSubmit = async (payload) => {
-    const response = await fetch("http://localhost:8000/properties", {
+    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+    const response = await fetch(`${API_URL}/properties`, {
       method: "POST",
       headers: getAuthHeaders(),
       body: JSON.stringify(payload),

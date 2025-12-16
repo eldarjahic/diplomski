@@ -471,21 +471,23 @@ function PropertyForm({
         <h2 className="text-xl font-semibold text-gray-900">Property Details</h2>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-900">
-              Price (BAM) *
-            </label>
-            <input
-              type="number"
-              name="price"
-              value={formData.price}
-              onChange={handleChange}
-              required
-              min="0"
-              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-gray-400"
-              placeholder="500"
-            />
-          </div>
+          {formData.listingType === "buy" && (
+            <div>
+              <label className="mb-1 block text-sm font-medium text-gray-900">
+                Price (BAM) *
+              </label>
+              <input
+                type="number"
+                name="price"
+                value={formData.price}
+                onChange={handleChange}
+                required
+                min="0"
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-gray-400"
+                placeholder="500"
+              />
+            </div>
+          )}
 
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-900">
@@ -649,20 +651,23 @@ function PropertyForm({
                 placeholder="12"
               />
             </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-gray-900">
-              Deposit Amount (BAM)
-              </label>
-              <input
-                type="number"
-                name="depositAmount"
-                value={formData.depositAmount}
-                onChange={handleChange}
-                min="0"
-                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-gray-400"
-                placeholder="500"
-              />
-            </div>
+            {formData.listingType === "rent" && (
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-900">
+                  Deposit Amount (BAM) *
+                </label>
+                <input
+                  type="number"
+                  name="depositAmount"
+                  value={formData.depositAmount}
+                  onChange={handleChange}
+                  required
+                  min="0"
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-gray-400"
+                  placeholder="500"
+                />
+              </div>
+            )}
           </div>
 
           <div className="grid gap-4 sm:grid-cols-3">

@@ -21,7 +21,8 @@ function EditProperty() {
       try {
         setLoading(true);
         setError("");
-        const response = await fetch(`http://localhost:8000/properties/${id}`, {
+        const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+        const response = await fetch(`${API_URL}/properties/${id}`, {
           headers: getAuthHeaders(),
         });
 
@@ -48,7 +49,8 @@ function EditProperty() {
   }, [id, isAuthenticated, getAuthHeaders, user]);
 
   const handleSubmit = async (payload) => {
-    const response = await fetch(`http://localhost:8000/properties/${id}`, {
+    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+    const response = await fetch(`${API_URL}/properties/${id}`, {
       method: "PUT",
       headers: getAuthHeaders(),
       body: JSON.stringify(payload),

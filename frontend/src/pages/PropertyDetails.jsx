@@ -15,7 +15,8 @@ function PropertyDetails() {
       try {
         setLoading(true);
         setError("");
-        const response = await fetch(`http://localhost:8000/properties/${id}`);
+        const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+        const response = await fetch(`${API_URL}/properties/${id}`);
         const data = await response.json();
 
         if (!response.ok) {

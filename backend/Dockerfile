@@ -1,27 +1,19 @@
 # Base image
-FROM node:20
-
-RUN apt-get update && apt-get install -y python3 make g++ && rm -rf /var/lib/apt/lists/*
-
-# Set working directory
+FROM node:20 AS base
 WORKDIR /usr/src/app
+COPY package*.json ./
+RUN npm ci --omit=dev
 
-# Copy package files and install deps
-COPY package.json ./
-# RUN npm install
-
-# Copy source code
+FROM base AS builder
 COPY . .
+RUN npm run build
 
-RUN npm install -g ts-node-dev
-
-
-# Build TS -> JS
-# RUN npm run build
-
-# Expose port
+FROM node:20-slim AS runner
+WORKDIR /usr/src/app
+ENV NODE_ENV=production
+COPY --from=base /usr/src/app/node_modules ./node_modules
+COPY --from=builder /usr/src/app/dist ./dist
 EXPOSE 3000
-
-# Run app
-# CMD ["node", "dist/index.js"]
-CMD ["npm", "run", "dev"]
+# Optional: run migrations before start
+# CMD ["sh", "-c", "npm run migration:run && node dist/index.js"]
+CMD ["node", "dist/index.js"]

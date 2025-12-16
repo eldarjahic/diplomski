@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import MessageModal from "./MessageModal";
 
-const API_URL = "http://localhost:8000";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 function PropertyModal({
   property,
@@ -165,14 +165,19 @@ function PropertyModal({
                 </p>
               </div>
               <div className="text-right">
-                <div className="text-3xl font-bold text-gray-900">
-                  {formatPrice(property.price)}
-                  {property.listingType === "rent" && (
+                {property.listingType === "rent" && property.depositAmount ? (
+                  <div className="text-3xl font-bold text-gray-900">
+                    {formatPrice(property.depositAmount)}
                     <span className="text-lg font-normal text-gray-600">
-                      /mj
+                      {" "}
+                      Deposit
                     </span>
-                  )}
-                </div>
+                  </div>
+                ) : property.listingType === "buy" && property.price ? (
+                  <div className="text-3xl font-bold text-gray-900">
+                    {formatPrice(property.price)}
+                  </div>
+                ) : null}
                 <span className="inline-block rounded-full bg-gray-900 px-3 py-1 text-xs font-semibold text-white">
                   {property.listingType === "rent" ? "For Rent" : "For Sale"}
                 </span>

@@ -106,12 +106,16 @@ function PropertyCard({ property, onClick }) {
           <h3 className="text-lg font-semibold text-gray-900 line-clamp-1">
             {property.title}
           </h3>
-          <span className="ml-2 text-xl font-bold text-gray-900">
-            {formatPrice(property.price)}
-            {property.listingType === "rent" && (
-              <span className="text-sm font-normal text-gray-600">/mj</span>
-            )}
-          </span>
+          {property.listingType === "rent" && property.depositAmount ? (
+            <span className="ml-2 text-xl font-bold text-gray-900">
+              {formatPrice(property.depositAmount)}
+              <span className="text-sm font-normal text-gray-600"> Deposit</span>
+            </span>
+          ) : property.listingType === "buy" && property.price ? (
+            <span className="ml-2 text-xl font-bold text-gray-900">
+              {formatPrice(property.price)}
+            </span>
+          ) : null}
         </div>
 
         <p className="mb-3 text-sm text-gray-600 line-clamp-2">

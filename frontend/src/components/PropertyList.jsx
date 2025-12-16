@@ -74,8 +74,9 @@ function PropertyList({
       if (elevator) params.append("elevator", "true");
       if (heating) params.append("heating", "true");
 
+      const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
       const response = await fetch(
-        `http://localhost:8000/properties?${params.toString()}`
+        `${API_URL}/properties?${params.toString()}`
       );
 
       if (!response.ok) {
