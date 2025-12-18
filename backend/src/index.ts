@@ -26,28 +26,28 @@ const allowedOrigins = [
   "https://eldi.deployer3000.halvooo.com",
 ];
 
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      if (!origin) return callback(null, true); // allow same-origin/CLI calls
+const corsOptions: cors.CorsOptions = {
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true); // allow same-origin/CLI calls
 
-      try {
-        const hostname = new URL(origin).hostname;
-        const isHalvooo = /\.halvooo\.com$/.test(hostname);
-        if (allowedOrigins.includes(origin) || isHalvooo) {
-          return callback(null, true);
-        }
-      } catch (err) {
-        return callback(err as Error, false);
+    try {
+      const hostname = new URL(origin).hostname;
+      const isHalvooo = /\.halvooo\.com$/.test(hostname);
+      if (allowedOrigins.includes(origin) || isHalvooo) {
+        return callback(null, true);
       }
+    } catch (err) {
+      return callback(err as Error, false);
+    }
 
-      return callback(new Error("Origin not allowed by CORS"), false);
-    },
-    credentials: true,
-  })
-);
+    return callback(new Error("Origin not allowed by CORS"), false);
+  },
+  credentials: true,
+};
 
-app.options("*", cors());
+app.use(cors(corsOptions));
+// Express 5 uses path-to-regexp v6, so use a regex-friendly pattern instead of "*"
+app.options("/(.*)", cors(corsOptions));
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
