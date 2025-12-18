@@ -27,27 +27,14 @@ const allowedOrigins = [
 ];
 
 const corsOptions: cors.CorsOptions = {
-  origin: (origin, callback) => {
-    if (!origin) return callback(null, true); // allow same-origin/CLI calls
-
-    try {
-      const hostname = new URL(origin).hostname;
-      const isHalvooo = /\.halvooo\.com$/.test(hostname);
-      if (allowedOrigins.includes(origin) || isHalvooo) {
-        return callback(null, true);
-      }
-    } catch (err) {
-      return callback(err as Error, false);
-    }
-
-    return callback(new Error("Origin not allowed by CORS"), false);
-  },
+  // reflect the requesting origin; still list known hosts for docs
+  origin: (origin, callback) => callback(null, true),
   credentials: true,
 };
 
 app.use(cors(corsOptions));
-// Express 5 uses path-to-regexp v6, so use a regex-friendly pattern instead of "*"
-app.options("/(.*)", cors(corsOptions));
+// Use a RegExp for preflight handling to avoid path-to-regexp string parsing issues
+app.options(/.*/, cors(corsOptions));
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
