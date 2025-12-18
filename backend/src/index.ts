@@ -18,11 +18,36 @@ const port = process.env.PORT || 3000;
 
 // allow frontend dev/preview to access the api
 const allowedOrigins = [
+  ...(process.env.ALLOWED_ORIGINS?.split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean) || []),
   process.env.FRONTEND_URL || "http://localhost:5173",
   "http://localhost:4173",
   "https://eldi.deployer3000.halvooo.com",
 ];
-app.use(cors({ origin: allowedOrigins }));
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true); // allow same-origin/CLI calls
+
+      try {
+        const hostname = new URL(origin).hostname;
+        const isHalvooo = /\.halvooo\.com$/.test(hostname);
+        if (allowedOrigins.includes(origin) || isHalvooo) {
+          return callback(null, true);
+        }
+      } catch (err) {
+        return callback(err as Error, false);
+      }
+
+      return callback(new Error("Origin not allowed by CORS"), false);
+    },
+    credentials: true,
+  })
+);
+
+app.options("*", cors());
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
@@ -85,7 +110,7 @@ app.get("/profile", authenticateToken, async (req: Request, res: Response) => {
 AppDataSource.initialize()
   .then(async () => {
     console.log("📦 Data Source has been initialized!");
-    
+
     // Run migrations
     console.log("🔄 Running migrations...");
     await AppDataSource.runMigrations();

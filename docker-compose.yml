@@ -33,6 +33,7 @@ services:
       DB_PASS: ${POSTGRES_PASSWORD:-password}
       DB_NAME: ${POSTGRES_DB:-diplomski}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:4173}
+      ALLOWED_ORIGINS: "https://eldi.deployer3000.halvooo.com,https://eldibackend.deployer3000.halvooo.com"
     depends_on:
       postgres:
         condition: service_healthy
